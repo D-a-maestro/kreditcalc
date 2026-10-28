@@ -346,7 +346,7 @@ function simulate(S, noPrepay, noPlan, opt) {   // opt: { order, targets: {m: id
           if (typeof entry.sync[k] === 'number' && isFinite(entry.sync[k])) bal[k] = Math.max(0, entry.sync[k]);
         });
       } else if (!noPlan) {
-        const budget = st.budget + comp; rec.budget = budget;
+        const budget = st.budget + comp + mins; rec.budget = budget;
         let pool = budget - mins;
         if (pool < 0) { rec.shortfall = -pool; pool = 0; }
         if (m > 0 && st.bonus > 0 && new Date(date).getUTCMonth() + 1 === st.bonusMonth) { pool += st.bonus; rec.bonus = st.bonus; }
@@ -722,7 +722,7 @@ function renderPlan() {
   const rows = ids.map(k => { const L = r.loans[k]; tp += L.pay; te += L.extra;
     return `<tr><td>${esc(S.loans[k].name)}</td><td>${money(L.pay)}</td><td>${L.extra > 0.5 ? '<b class="pos">' + money(L.extra) + '</b>' : '—'}</td></tr>`; }).join('');
   const short = r.shortfall > 1 ? `<div class="alert bad">В этом месяце не хватает ${money(r.shortfall)} на платежи по графику.</div>` : '';
-  const noExtra = te < 0.5 && !short ? `<div class="note">Досрочных в этом месяце нет: на кредиты отведено ${money(S.settings.budget + r.comp)}, а платежи по графику — ${money(tp)}. Сумму можно изменить в «Исходных данных».</div>` : '';
+  const noExtra = te < 0.5 && !short ? `<div class="note">Досрочных в этом месяце нет: сверх платежей по графику (${money(tp)}) отведено ${money(S.settings.budget + r.comp)}. Сумму можно изменить в «Исходных данных».</div>` : '';
   const prim = primaryAt(P, sim, mNow);
   const extraBlock = !prim ? '' : P.anyAmount
     ? `<div class="note">Появились деньги сверх плана? Любую сумму вносите туда же: <b>${esc(S.loans[prim].name)}</b>. Если этот кредит закроется, остаток — в следующий по плану.</div>`
@@ -797,7 +797,7 @@ function renderSlice() {
   let after = '';
   if (next) {
     const pays = ids.filter(k => next.loans[k].pay > 0);
-    const compN = next.comp, budget = S.settings.budget + compN, reserve = budget - next.mins;
+    const compN = next.comp, reserve = S.settings.budget + compN, budget = reserve + next.mins;
     const lines = pays.map(k => `<tr><td>${esc(S.loans[k].name)}</td><td>${money(next.loans[k].pay)}</td><td>${money(next.loans[k].int)}</td></tr>`).join('');
     const mortInt = DISPLAY.reduce((q, k) => q + (S.loans[k].comp ? next.loans[k].int : 0), 0);
     after = `<section class="card"><h2>Месяц сразу после ${dd} (${labelFull(next.m)})</h2>
@@ -847,11 +847,11 @@ function renderSet() {
     <div class="note">Основной долг на ${baseLabel()} — это остаток после последнего платежа до начала учёта, без накопленных процентов. Если кредит оформлен позже — укажите сумму кредита и месяц первого платежа в блоке «Дата начала учёта». Менять числа у существующих нужно, только если банк пересчитал график. Удаление кредита стирает и его отметки в истории.</div></section>
   <section class="card"><h2>Сколько можете отдавать на кредиты</h2>
     <div class="grid2">
-      <label class="f">Своих денег в месяц на кредиты, включая платежи по графику, ₽<input type="text" inputmode="decimal" data-s="budget" value="${moneyIn(st.budget)}"></label>
+      <label class="f">Сколько можете отдавать сверх платежей по графику, ₽<input type="text" inputmode="decimal" data-s="budget" value="${moneyIn(st.budget)}"></label>
       <label class="f">Премия или другой доход раз в год, ₽<input type="text" inputmode="decimal" data-s="bonus" value="${moneyIn(st.bonus)}"></label>
       <label class="f">Месяц премии<select data-s="bonusMonth">${monthSel}</select></label>
     </div>
-    <div class="note">Платежи по графику сейчас: ${money(minsNow)}.${compNow > 0 ? ' Компенсация работодателя добавляется сама (сейчас ' + money(compNow) + ').' : ''} ${st.budget + compNow > minsNow ? 'На досрочное остаётся около ' + money(st.budget + compNow - minsNow) + ' в месяц.' : '<b>Этой суммы не хватает на платежи по графику — досрочных не будет.</b>'}</div></section>
+    <div class="note">Платежи по графику сейчас: ${money(minsNow)}.${compNow > 0 ? ' Компенсация работодателя добавляется сама (сейчас ' + money(compNow) + ').' : ''} ${st.budget + compNow > 0 ? 'На досрочное уходит ' + money(st.budget + compNow) + ' в месяц, всего на кредиты ' + money(st.budget + compNow + minsNow) + '.' : '<b>Досрочных не будет: укажите сумму сверх платежей.</b>'}</div></section>
   <section class="card"><details class="more" id="dAcc" ${ui.det.dAcc ? 'open' : ''}><summary>Дата начала учёта и день платежа</summary><div class="in">
     <div class="grid2">
       <label class="f">Месяц последнего платежа, от которого ведётся учёт<input type="month" data-s="startMonth" value="${esc(st.startMonth)}"></label>
