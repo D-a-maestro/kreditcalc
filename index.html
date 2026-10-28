@@ -347,7 +347,7 @@ function simulate(S, noPrepay, noPlan, opt) {   // opt: { order, targets: {m: id
           if (typeof entry.sync[k] === 'number' && isFinite(entry.sync[k])) bal[k] = Math.max(0, entry.sync[k]);
         });
       } else if (!noPlan) {
-        const budget = st.budget + comp + baseMins(S); rec.budget = budget;
+        const budget = st.budget + baseMins(S); rec.budget = budget;
         let pool = budget - mins;
         if (pool < 0) { rec.shortfall = -pool; pool = 0; }
         if (m > 0 && st.bonus > 0 && new Date(date).getUTCMonth() + 1 === st.bonusMonth) { pool += st.bonus; rec.bonus = st.bonus; }
@@ -798,13 +798,13 @@ function renderSlice() {
   let after = '';
   if (next) {
     const pays = ids.filter(k => next.loans[k].pay > 0);
-    const compN = next.comp, budget = S.settings.budget + compN + baseMins(S), reserve = budget - next.mins;
+    const compN = next.comp, budget = S.settings.budget + baseMins(S), reserve = budget - next.mins;
     const lines = pays.map(k => `<tr><td>${esc(S.loans[k].name)}</td><td>${money(next.loans[k].pay)}</td><td>${money(next.loans[k].int)}</td></tr>`).join('');
     const mortInt = DISPLAY.reduce((q, k) => q + (S.loans[k].comp ? next.loans[k].int : 0), 0);
     after = `<section class="card"><h2>Месяц сразу после ${dd} (${labelFull(next.m)})</h2>
       <div class="table-scroll"><table><thead><tr><th>Платёж по графику</th><th>Сумма</th><th>В т. ч. проценты</th></tr></thead><tbody>${lines}
         <tr class="total"><td>Всего платежей</td><td>${money(next.mins)}</td><td></td></tr></tbody></table></div>
-      <div class="kv" style="margin-top:10px"><span>Бюджет на долги (ваши деньги + помощь)${compN > 0 ? ' с компенсацией ' + money(compN) : ' без компенсации'}</span><b>${money(budget)}</b></div>
+      <div class="kv" style="margin-top:10px"><span>Бюджет на кредиты</span><b>${money(budget)}</b></div>
       <div class="kv"><span>${reserve >= 0 ? 'Запас сверх платежей' : 'Не хватает'}</span><b class="${reserve >= 0 ? 'pos' : 'neg'}">${money(Math.abs(reserve))}</b></div>
       ${mortInt > 0 ? `<div class="kv"><span>Проценты по кредитам с компенсацией в этом месяце${compN > 0 ? ' (возмещает работодатель)' : ' (платите сами)'}</span><span>${money(mortInt)}</span></div>` : ''}
     </section>`;
@@ -852,7 +852,7 @@ function renderSet() {
       <label class="f">Премия или другой доход раз в год, ₽<input type="text" inputmode="decimal" data-s="bonus" value="${moneyIn(st.bonus)}"></label>
       <label class="f">Месяц премии<select data-s="bonusMonth">${monthSel}</select></label>
     </div>
-    <div class="note">Платежи по графику сейчас: ${money(minsNow)}.${compNow > 0 ? ' Компенсация работодателя добавляется сама (сейчас ' + money(compNow) + ').' : ''} ${st.budget + compNow > 0 ? 'На досрочное уходит ' + money(st.budget + compNow) + ' в месяц, всего на кредиты ' + money(st.budget + compNow + minsNow) + '.' : '<b>Досрочных не будет: укажите сумму сверх платежей.</b>'}</div></section>
+    <div class="note">Платежи по графику сейчас: ${money(minsNow)}.${compNow > 0 ? ' Компенсация работодателя учитывается в экономии на процентах, в сумму выше её добавлять не нужно.' : ''} ${st.budget > 0 ? 'На досрочное уходит ' + money(st.budget) + ' в месяц, всего на кредиты ' + money(st.budget + minsNow) + '.' : '<b>Досрочных не будет: укажите сумму сверх платежей.</b>'}</div></section>
   <section class="card"><details class="more" id="dAcc" ${ui.det.dAcc ? 'open' : ''}><summary>Дата начала учёта и день платежа</summary><div class="in">
     <div class="grid2">
       <label class="f">Месяц последнего платежа, от которого ведётся учёт<input type="month" data-s="startMonth" value="${esc(st.startMonth)}"></label>
