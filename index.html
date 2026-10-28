@@ -1,0 +1,1019 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Трекер досрочных платежей</title>
+<style>
+:root {
+  --bg: #F4F5F0;
+  --surface: #FFFFFF;
+  --field: #F7F9F4;
+  --ink: #182B29;
+  --muted: #73807A;
+  --line: #E4E9E1;
+  --line-strong: #CDD6C8;
+  --brand: #2F5E3F;
+  --brand-ink: #FFFFFF;
+  --brand-soft: #EDF4E4;
+  --pos: #3E7A35;
+  --pos-soft: #EEF6E2;
+  --pos-line: #A6C38F;
+  --neg: #A8664F;
+  --sky: #B7C6B2;
+  --c-old: #D2DACB;
+  --c-int: #C99A7E;
+  --c-new: #4E7D3A;
+  --c-area: rgba(110, 160, 80, 0.16);
+  --extra-bg: #FAFEF2;
+  --extra-line: #DCE7CE;
+  --warn: #8C6122;
+  --warn-bg: #FFF1D9;
+  --hero-bg: #1C302C;
+  --hero-ink: #FFFFFF;
+  --hero-muted: #A9BBA2;
+  --hero-line: rgba(173, 203, 155, 0.16);
+  --lime: #D4F77C;
+  --lime-ink: #233A1B;
+  --seg-bg: #EFF3EA;
+  --quick-line: #D6E2C8;
+  --quick-ink: #5E7550;
+  --ico-bg: #F2F5EE;
+  --ico-ink: #6B805C;
+  --ico-on-bg: #DAE9C8;
+  --ico-on-ink: #456333;
+  --soft-ink: #6B7D69;
+  --accent-text: #73876A;
+  --bad: #9A3B2B; --bad-bg: #FBE9E4;
+  --font: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0F1715; --surface: #16211E; --field: #121B19; --ink: #E4ECE5; --muted: #93A39A;
+    --line: #24322E; --line-strong: #34453F; --brand: #A9D39A; --brand-ink: #10201A; --brand-soft: rgba(169, 211, 154, 0.12);
+    --pos: #BFE38E; --pos-soft: rgba(212, 247, 124, 0.08); --pos-line: #5E7F4B; --neg: #D9A08A; --bad: #F0A898; --bad-bg: #3A1F1A;
+    --sky: #5A7264; --c-old: #3B4B45; --c-int: #B98A70; --c-new: #BFE38E; --c-area: rgba(191, 227, 142, 0.12);
+    --extra-bg: #17241C; --extra-line: #2C3D2F; --warn: #E8C27A; --warn-bg: #33291A;
+    --hero-bg: #1C302C; --seg-bg: #1D2A26; --quick-line: #34453F; --quick-ink: #B5CCA5; --ico-bg: #1D2A26; --ico-ink: #A9C29A; --ico-on-bg: #2F4630; --ico-on-ink: #D4F77C; --soft-ink: #8FA28C; --accent-text: #9DB491; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0F1715; --surface: #16211E; --field: #121B19; --ink: #E4ECE5; --muted: #93A39A;
+  --line: #24322E; --line-strong: #34453F; --brand: #A9D39A; --brand-ink: #10201A; --brand-soft: rgba(169, 211, 154, 0.12);
+  --pos: #BFE38E; --pos-soft: rgba(212, 247, 124, 0.08); --pos-line: #5E7F4B; --neg: #D9A08A; --bad: #F0A898; --bad-bg: #3A1F1A;
+  --sky: #5A7264; --c-old: #3B4B45; --c-int: #B98A70; --c-new: #BFE38E; --c-area: rgba(191, 227, 142, 0.12);
+  --extra-bg: #17241C; --extra-line: #2C3D2F; --warn: #E8C27A; --warn-bg: #33291A;
+  --hero-bg: #1C302C; --seg-bg: #1D2A26; --quick-line: #34453F; --quick-ink: #B5CCA5; --ico-bg: #1D2A26; --ico-ink: #A9C29A; --ico-on-bg: #2F4630; --ico-on-ink: #D4F77C; --soft-ink: #8FA28C; --accent-text: #9DB491; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin:0; background:var(--bg); color:var(--ink); font-family:var(--font); font-size:16px; line-height:1.5; -webkit-font-smoothing:antialiased; padding:8px 16px 48px; }
+button { font:inherit; color:inherit; }
+.wrap { max-width:1280px; margin:0 auto; }
+.top { height:72px; display:flex; align-items:center; justify-content:space-between; gap:12px; border-bottom:1px solid var(--line); }
+.brand { display:flex; align-items:center; gap:10px; font-size:17px; font-weight:700; letter-spacing:-0.02em; }
+.mark { width:36px; height:36px; border-radius:11px; background:var(--hero-bg); color:var(--lime); display:grid; place-items:center; }
+.mark svg { display:block; }
+.head-right { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+.theme-btn { display:flex; align-items:center; gap:8px; border:1px solid var(--line-strong); background:transparent; color:var(--ink); border-radius:999px; padding:9px 14px; font-size:15px; font-weight:600; cursor:pointer; }
+.theme-btn:hover { background:var(--surface); }
+.theme-btn .i-sun { display:none; }
+.theme-btn[aria-pressed="true"] .i-sun { display:block; }
+.theme-btn[aria-pressed="true"] .i-moon { display:none; }
+.hello { padding:26px 0 20px; }
+.eyebrow { text-transform:uppercase; letter-spacing:.14em; font-size:13px; font-weight:700; color:var(--soft-ink); margin:0 0 10px; }
+h1 { font-size:clamp(28px,4.4vw,44px); font-weight:600; line-height:1.06; letter-spacing:-0.04em; margin:0; text-wrap:balance; }
+h1 span { color:var(--accent-text); }
+.sub { color:var(--muted); font-size:15.5px; line-height:1.6; margin-top:10px; max-width:720px; }
+.badge { font-size:13px; font-weight:600; padding:5px 12px; border-radius:999px; background:var(--brand-soft); color:var(--brand); white-space:nowrap; }
+.badge.warn { background:var(--warn-bg); color:var(--warn); }
+.tabs { display:grid; grid-auto-flow:column; grid-auto-columns:minmax(0,1fr); gap:3px; background:var(--seg-bg); border-radius:11px; padding:4px; margin-bottom:20px; }
+.tabs button { border:0; background:transparent; color:var(--muted); font-size:15px; font-weight:550; min-height:38px; border-radius:8px; padding:6px 10px; cursor:pointer; line-height:1.2; }
+.tabs button:hover { color:var(--ink); }
+.tabs button.on { background:var(--surface); color:var(--ink); font-weight:650; box-shadow:0 2px 6px rgba(40,65,30,.08); }
+@media (max-width:640px){ .tabs { grid-auto-flow:row; grid-template-columns:1fr 1fr; } }
+.card { background:var(--surface); border:1px solid var(--line); border-radius:24px; padding:22px; margin-bottom:18px; min-width:0; }
+.card h2 { font-size:18px; font-weight:650; letter-spacing:-0.03em; margin:0 0 14px; }
+.hero { background:var(--hero-bg); color:var(--hero-ink); border-radius:24px; padding:28px; margin-bottom:18px; position:relative; overflow:hidden; }
+.hero::before, .hero::after { content:""; position:absolute; border-radius:50%; border:1px solid rgba(173,203,155,.08); pointer-events:none; }
+.hero::before { width:360px; height:360px; top:-190px; right:-80px; }
+.hero::after { width:480px; height:480px; top:-250px; right:-140px; }
+.hero > * { position:relative; z-index:1; }
+.hero .k { color:var(--hero-muted); font-size:15px; }
+.hero .v { font-size:clamp(26px,3.6vw,38px); font-weight:500; letter-spacing:-0.04em; line-height:1.1; font-variant-numeric:tabular-nums; }
+.hero .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:18px 24px; }
+.hero .good { color:var(--lime); }
+table { width:100%; border-collapse:collapse; font-variant-numeric:tabular-nums; }
+th, td { text-align:right; padding:12px 8px; border-bottom:1px solid var(--line); font-size:15.5px; vertical-align:middle; }
+th:first-child, td:first-child { text-align:left; }
+th { color:var(--muted); font-size:14px; font-weight:500; }
+tr.total td { font-weight:650; border-bottom:0; }
+tr.best td { background:var(--pos-soft); }
+.goalseg { display:grid; grid-template-columns:1fr 1fr; gap:3px; background:var(--seg-bg); border-radius:11px; padding:4px; margin-bottom:16px; }
+.goalseg button { border:0; background:transparent; color:var(--muted); border-radius:8px; padding:10px 12px; cursor:pointer; text-align:left; display:grid; gap:2px; }
+.goalseg button b { font-size:15px; font-weight:600; }
+.goalseg button small { font-size:13.5px; }
+.goalseg button[aria-pressed="true"] { background:var(--surface); color:var(--ink); box-shadow:0 2px 6px rgba(40,65,30,.08); }
+.goalseg button[aria-pressed="true"] small { color:var(--muted); }
+@media (max-width:640px){ .goalseg { grid-template-columns:1fr; } }
+details.more summary { cursor:pointer; list-style:none; display:flex; justify-content:space-between; align-items:center; font-size:18px; font-weight:650; letter-spacing:-0.03em; }
+details.more summary::-webkit-details-marker { display:none; }
+details.more summary::after { content:'+'; font-size:22px; font-weight:400; color:var(--muted); }
+details.more[open] summary::after { content:'−'; }
+details.more .in { padding-top:16px; }
+.table-scroll { overflow-x:auto; }
+th.grp { text-align:center; border-bottom:2px solid var(--line-strong); color:var(--ink); font-weight:600; }
+.card table input { min-width:104px; height:40px; padding:0 10px; font-size:15.5px; }
+#calcWrap iframe { width:100%; height:calc(100vh - 190px); min-height:680px; border:1px solid var(--line); border-radius:24px; background:var(--bg); display:block; }
+input[type=text], input[type=date], input[type=month], input[type=number], select {
+  width:100%; min-width:110px; height:46px; border:1px solid var(--line); background:var(--field); color:var(--ink);
+  border-radius:12px; padding:0 12px; font:inherit; font-size:17px; font-weight:500; font-variant-numeric:tabular-nums; text-align:right;
+  transition:border-color .15s, box-shadow .15s; }
+input:focus, select:focus { outline:none; border-color:var(--brand); box-shadow:0 0 0 3px var(--brand-soft); }
+input::placeholder { color:var(--muted); font-weight:400; opacity:.8; }
+select { text-align:left; }
+input.l { text-align:left; }
+button:focus-visible { outline:3px solid #88B85B; outline-offset:3px; }
+label.f { display:block; font-size:14px; font-weight:500; color:var(--muted); margin-bottom:14px; }
+label.f input, label.f select { margin-top:0; }
+.grid2 > label.f { display:flex; flex-direction:column; justify-content:space-between; gap:8px; margin:0; }
+.grid2 + .grid2, .grid2 + .note { margin-top:16px; }
+.row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:14px; }
+.row > * { flex:0 0 auto; }
+.row input { width:170px; }
+button.btn, label.btn { display:inline-flex; align-items:center; height:46px; border:0; border-radius:12px; background:var(--hero-bg); color:#E7F2DF; font-weight:600; font-size:15.5px; padding:0 16px; cursor:pointer; }
+button.btn:hover, label.btn:hover { filter:brightness(1.15); }
+button.btn.primary { background:var(--brand); color:var(--brand-ink); }
+button.btn.danger { background:transparent; color:var(--bad); border:1px solid var(--line-strong); }
+button.btn.small { height:auto; padding:6px 10px; font-size:14px; border-radius:7px; background:transparent; color:var(--quick-ink); border:1px solid var(--quick-line); font-weight:550; }
+button.btn.small:hover { background:var(--brand-soft); }
+button.btn.small.danger { color:var(--bad); border-color:var(--line-strong); }
+.note { font-size:15px; color:var(--muted); margin-top:12px; line-height:1.6; }
+.alert { background:var(--warn-bg); color:var(--warn); border-radius:14px; padding:12px 16px; margin-bottom:14px; font-size:15.5px; }
+.alert.bad { background:var(--bad-bg); color:var(--bad); }
+.alert.ok { background:var(--pos-soft); color:var(--pos); border:1px solid var(--pos-line); }
+.grid2 { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:14px; }
+.loan { border:1px solid var(--line); background:var(--field); border-radius:18px; padding:16px; }
+.loan h3 { margin:0 0 8px; font-size:16px; font-weight:650; letter-spacing:-0.01em; }
+.bar { height:6px; border-radius:4px; background:var(--line); overflow:hidden; margin:8px 0 12px; }
+.bar > i { display:block; height:100%; background:var(--c-new); border-radius:4px; }
+.kv { display:flex; justify-content:space-between; gap:10px; font-size:15px; padding:3px 0; font-variant-numeric:tabular-nums; }
+.kv span:first-child { color:var(--muted); }
+.pos { color:var(--pos); } .neg { color:var(--bad); }
+.chart svg { width:100%; height:auto; display:block; }
+.ax { fill:var(--muted); font-size:13px; font-family:var(--font); font-variant-numeric:tabular-nums; }
+.legend { display:flex; gap:6px 18px; font-size:14px; color:var(--muted); margin-top:8px; flex-wrap:wrap; }
+.legend i { display:inline-block; width:16px; height:3px; border-radius:2px; margin-right:6px; vertical-align:middle; }
+.chips { display:flex; gap:6px; flex-wrap:wrap; margin:8px 0 14px; }
+@media (max-width:640px){
+  th, td { padding:9px 5px; font-size:14px; }
+  body { padding:0 12px 32px; }
+  .top { height:58px; } .brand { font-size:16px; } .mark { width:32px; height:32px; }
+  #storage, .hello { display:none; }
+  .theme-btn { padding:7px 10px; font-size:0; gap:0; } .theme-btn svg { width:17px; height:17px; }
+  .tabs { position:sticky; top:0; z-index:5; display:flex; overflow-x:auto; scrollbar-width:none; margin:10px -12px 14px; border-radius:0; padding:6px 12px; }
+  .tabs::-webkit-scrollbar { display:none; }
+  .tabs button { flex:0 0 auto; padding:8px 14px; }
+  .card, .hero { border-radius:20px; padding:16px; margin-bottom:12px; }
+  .hero .grid { grid-template-columns:1fr 1fr; gap:14px; } .hero .grid > div:first-child { grid-column:1 / -1; }
+  .hero .v { font-size:26px; }
+  .card h2 { font-size:17px; }
+  table.stack thead { display:none; }
+  table.stack tr { display:grid; grid-template-columns:1fr 1fr; gap:8px 12px; padding:12px 0; border-bottom:1px solid var(--line); }
+  table.stack tbody tr:last-child { border-bottom:0; }
+  table.stack td { display:flex; flex-direction:column; align-items:flex-start; justify-content:flex-end; gap:3px; border:0; padding:0; text-align:left; font-size:15px; min-width:0; }
+  table.stack td::before { content:attr(data-h); font-size:12.5px; color:var(--muted); font-weight:400; }
+  table.stack td[data-h=""]::before { display:none; }
+  table.stack td:first-child { grid-column:1 / -1; font-weight:600; }
+  table.stack td:first-child::before { display:none; }
+  table.stack td input, table.stack td select, .card table.stack input { min-width:0; width:100%; }
+  .row input, .row label.f { width:100%; }
+  .row > .btn { flex:1 1 auto; justify-content:center; }
+  #calcWrap iframe { height:calc(100vh - 120px); min-height:560px; border-radius:16px; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition:none !important; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <span class="mark" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M4 6h4v4h4v4h4v4h4" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+      <span>Кредитный трекер</span>
+    </div>
+    <div class="head-right">
+      <div id="storage" class="badge">данные сохраняются в браузере</div>
+      <button type="button" class="theme-btn" id="themeBtn" aria-pressed="false">
+        <svg class="i-moon" width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M13.5 9.6A5.6 5.6 0 0 1 6.4 2.5a5.6 5.6 0 1 0 7.1 7.1Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+        <svg class="i-sun" width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M8 1.5v1.6M8 12.9v1.6M1.5 8h1.6M12.9 8h1.6M3.4 3.4l1.1 1.1M11.5 11.5l1.1 1.1M3.4 12.6l1.1-1.1M11.5 4.5l1.1-1.1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        <span id="themeLbl">Тёмная тема</span>
+      </button>
+    </div>
+  </header>
+  <section class="hello">
+    <p class="eyebrow">Кредиты · досрочное погашение</p>
+    <h1>Быстрее и дешевле <span>закрыть долги.</span></h1>
+    <div class="sub">Введите кредиты и сколько можете отдавать в месяц — трекер подберёт лучший план и каждый месяц подскажет, куда вносить.</div>
+  </section>
+  <nav class="tabs" id="tabs">
+    <button data-tab="plan">План</button>
+    <button data-tab="pay">Внести платёж</button>
+    <button data-tab="slice">Срез на дату</button>
+    <button data-tab="calc">Калькулятор</button>
+    <button data-tab="set">Исходные данные</button>
+  </nav>
+  <main id="view"></main>
+  <div id="calcWrap" hidden><iframe id="calcFrame" title="Калькулятор досрочного погашения" src="about:blank"></iframe></div>
+</div>
+
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script>
+//#engine-start
+const MONTHS = ['янв','фев','мар','апр','мая','июн','июл','авг','сен','окт','ноя','дек'];
+const MONTHS_FULL = ['январь','февраль','март','апрель','май','июнь','июль','август','сентябрь','октябрь','ноябрь','декабрь'];
+let DISPLAY = ['C2','C1','Auto','Mort'];          // порядок показа (обновляется по списку кредитов)
+let START = { y: 2026, mo: 9 };                      // месяц последнего платежа, от которого ведётся учёт (mo с нуля); m=0 — следующий платёж
+let PAYDAY = 28;                                     // день платежа
+const DAY = 86400000;
+
+// месяц последнего прошедшего платежа (для нового трекера)
+function defaultStart() { const n = new Date(), d = n.getDate() >= 28 ? n : new Date(n.getFullYear(), n.getMonth() - 1, 1); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); }
+const DEFAULTS = {
+  settings: { budget: 0, bonus: 0, bonusMonth: 12, compOn: false, compEnd: '2029-03-31', compLimit: 0, compFirst: 0, goal: 'free',
+              order: [], orderMode: 'auto', startMonth: defaultStart(), payDay: 28, slice: '2029-03-31' },
+  loans: {},
+  log: {}
+};
+
+// Очередь досрочных. Порядок — по ставке (авто) или ваш (вручную). Пока работодатель возмещает проценты по кредиту (comp),
+// досрочно по нему платить невыгодно, и он уходит в конец очереди; когда компенсация кончилась — встаёт по обычным правилам.
+function baseOrder(S) {
+  const ids = Object.keys(S.loans), o = (S.settings.order || []).filter(k => ids.includes(k));
+  ids.forEach(k => { if (!o.includes(k)) o.push(k); });
+  return S.settings.orderMode === 'auto' ? o.slice().sort((x, y) => S.loans[y].rate - S.loans[x].rate) : o;
+}
+function orderFor(S, o, compActive) { return compActive ? o.filter(k => !S.loans[k].comp).concat(o.filter(k => S.loans[k].comp)) : o; }
+function prepayOrder(S, compActive) { return orderFor(S, baseOrder(S), compActive !== false); }
+// дата платежа m; m=-1 — последний платёж до начала учёта
+function dt(m) {
+  const t = START.mo + m, y = START.y + Math.floor(t / 12), mo = ((t % 12) + 12) % 12;
+  return Date.UTC(y, mo, Math.min(PAYDAY, new Date(Date.UTC(y, mo + 1, 0)).getUTCDate()));
+}
+function baseLabel() { const d = new Date(dt(-1)); return String(d.getUTCDate()).padStart(2, '0') + '.' + String(d.getUTCMonth() + 1).padStart(2, '0') + '.' + d.getUTCFullYear(); }
+function startM(L) { return L.start ? Math.max(0, mOfKey(L.start)) : 0; }          // с какого платежа кредит участвует в расчёте
+function keyOf(m) { const d = new Date(dt(m)); return d.getUTCFullYear() + '-' + String(d.getUTCMonth() + 1).padStart(2, '0'); }
+function mOfKey(k) { const [y, mo] = k.split('-').map(Number); return (y - START.y) * 12 + (mo - 1 - START.mo); }
+const MONTHS_N = ['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
+function label(m) { const d = new Date(dt(m)); return MONTHS_N[d.getUTCMonth()] + ' ' + d.getUTCFullYear(); }
+function labelFull(m) { const d = new Date(dt(m)); return d.getUTCDate() + ' ' + MONTHS[d.getUTCMonth()] + ' ' + d.getUTCFullYear(); }
+function isoMs(s) { const [y, m, d] = s.split('-').map(Number); return Date.UTC(y, m - 1, d); }
+// доля года по дням (365/366), как считает банк
+function yf(a, b) {
+  let f = 0, cur = a;
+  while (cur < b) {
+    const y = new Date(cur).getUTCFullYear();
+    const seg = Math.min(b, Date.UTC(y + 1, 0, 1));
+    const diy = ((y % 4 === 0 && y % 100 !== 0) || y % 400 === 0) ? 366 : 365;
+    f += Math.round((seg - cur) / DAY) / diy;
+    cur = seg;
+  }
+  return f;
+}
+function hasEntry(e) { return !!(e && (e.done || (e.extra && Object.keys(e.extra).length) || (e.sync && Object.keys(e.sync).length) || (e.split && Object.keys(e.split).length) || (e.xsplit && Object.keys(e.xsplit).length))); }
+
+// Расчёт: факт (то, что вы внесли) + прогноз по плану (дальше). noPrepay=true — график без досрочек.
+function simulate(S, noPrepay, noPlan, opt) {   // opt: { order, targets: {m: id}, extra: {m, amount, target} }
+  opt = opt || {};   // noPlan=true — без прогноза плана: после последнего отмеченного месяца только платежи по графику
+  const ids = Object.keys(S.loans), st = S.settings;
+  const bal = {}; ids.forEach(k => bal[k] = startM(S.loans[k]) === 0 ? S.loans[k].bal0 : 0);
+  const maxStart = ids.reduce((q, k) => Math.max(q, startM(S.loans[k])), 0);
+  const compEndMs = isoMs(st.compEnd);
+  let lastLogged = -1;
+  Object.keys(S.log).forEach(k => { if (hasEntry(S.log[k])) lastLogged = Math.max(lastLogged, mOfKey(k)); });
+  const months = [], ends = {}, baseOrd = opt.order || baseOrder(S);
+  const tot = { int: 0, comp: 0, extra: 0 }, intBy = {};
+  ids.forEach(k => intBy[k] = 0);
+  let compLeft = st.compLimit, prevMortInt = 0;
+  for (let m = 0; m < 600; m++) {
+    const date = dt(m), key = keyOf(m), entry = S.log[key];
+    let comp = 0;
+    if (st.compOn && date <= compEndMs) {
+      if (m === 0) comp = st.compFirst;
+      else { comp = Math.min(prevMortInt, compLeft); compLeft -= comp; }
+    }
+    const rec = { m, key, date, comp, loans: {}, fact: false, shortfall: 0, bonus: 0, mins: 0, budget: 0 };
+    let mins = 0, mortInt = 0;
+    const isFact = !noPrepay && (hasEntry(entry) || m <= lastLogged);
+    ids.forEach(k => {
+      const L = S.loans[k];
+      if (m > 0 && m === startM(L)) bal[k] = L.bal0;               // кредит подключается с этого платежа
+      if (bal[k] <= 0.5) { rec.loans[k] = { open: 0, int: 0, pay: 0, extra: 0, afterPay: 0, bal: 0 }; return; }
+      const open = bal[k];
+      let i = open * (L.rate / 100) * yf(dt(m - 1), date), pay, principal, real = false;
+      // фактическая разбивка платежа от банка (если вы её указали) точнее расчёта
+      const sp = isFact && entry && entry.split ? entry.split[k] : null;
+      if (sp && typeof sp.int === 'number') { i = Math.max(0, sp.int); real = true; }
+      if (sp && typeof sp.princ === 'number') { principal = Math.min(open, Math.max(0, sp.princ)); pay = principal + i; real = true; }
+      else { pay = Math.min(L.pay, open + i); principal = pay - i; }
+      bal[k] = open - principal;
+      if (L.comp) mortInt += i;
+      mins += pay; tot.int += i; intBy[k] += i;
+      rec.loans[k] = { open, int: i, pay, extra: 0, afterPay: bal[k], bal: bal[k], real };
+    });
+    rec.mins = mins; prevMortInt = mortInt;
+    if (!noPrepay) {
+      if (hasEntry(entry) || m <= lastLogged) {
+        rec.fact = true;
+        ids.forEach(k => {
+          if (rec.loans[k].open <= 0.5) return;
+          const want = Math.max(0, (entry && entry.extra && entry.extra[k]) || 0);
+          const xs = entry && entry.xsplit ? entry.xsplit[k] : null;
+          // досрочный взнос 28-го сразу после списания уходит целиком в основной долг;
+          // если банк часть взял в проценты (взнос в другой день) — берём его разбивку
+          let Ei = 0, Ep;
+          if (xs && typeof xs.princ === 'number') { Ep = Math.max(0, xs.princ); Ei = typeof xs.int === 'number' ? Math.max(0, xs.int) : Math.max(0, want - Ep); }
+          else if (xs && typeof xs.int === 'number') { Ei = Math.max(0, xs.int); Ep = Math.max(0, want - Ei); }
+          else Ep = want;
+          Ep = Math.min(Ep, bal[k]);
+          const cash = Ep + Ei;
+          if (cash > 0) {
+            bal[k] -= Ep;
+            Object.assign(rec.loans[k], { extra: cash, extraInt: Ei, extraPrinc: Ep });
+            tot.extra += cash; tot.int += Ei; intBy[k] += Ei;
+            if (S.loans[k].comp) prevMortInt += Ei;            // возмещаются все фактически уплаченные проценты
+          }
+        });
+        if (entry && entry.sync) ids.forEach(k => {
+          if (typeof entry.sync[k] === 'number' && isFinite(entry.sync[k])) bal[k] = Math.max(0, entry.sync[k]);
+        });
+      } else if (!noPlan) {
+        const budget = st.budget + comp; rec.budget = budget;
+        let pool = budget - mins;
+        if (pool < 0) { rec.shortfall = -pool; pool = 0; }
+        if (m > 0 && st.bonus > 0 && new Date(date).getUTCMonth() + 1 === st.bonusMonth) { pool += st.bonus; rec.bonus = st.bonus; }
+        let order = orderFor(S, baseOrd, comp > 0.005);
+        const tg = opt.targets && opt.targets[m];          // план: в этом месяце досрочное сначала сюда
+        if (tg) order = [tg].concat(order.filter(x => x !== tg));
+        if (opt.extra && m === opt.extra.m) {               // деньги сверх плана: сначала в выбранный кредит, остаток — по плану
+          let lp = opt.extra.amount; rec.lumpBy = {};
+          const o2 = opt.extra.target ? [opt.extra.target].concat(order.filter(x => x !== opt.extra.target)) : order;
+          for (const k of o2) {
+            if (lp <= 0.005) break;
+            if (!(k in bal) || bal[k] <= 0.5) continue;
+            const a = Math.min(lp, bal[k]); bal[k] -= a; lp -= a;
+            rec.loans[k].extra += a; rec.loans[k].extraPrinc = (rec.loans[k].extraPrinc || 0) + a; tot.extra += a; rec.lumpBy[k] = a;
+          }
+        }
+        for (const k of order) {
+          if (pool <= 0.005) break;
+          if (!(k in bal) || bal[k] <= 0.5) continue;
+          const a = Math.min(pool, bal[k]); bal[k] -= a; pool -= a;
+          rec.loans[k].extra += a; rec.loans[k].extraPrinc = (rec.loans[k].extraPrinc || 0) + a; tot.extra += a;
+        }
+      }
+    }
+    ids.forEach(k => { rec.loans[k].bal = bal[k]; if (bal[k] <= 0.5 && ends[k] === undefined && m >= startM(S.loans[k]) && S.loans[k].bal0 > 0.5) ends[k] = m; });
+    months.push(rec);
+    if (m >= maxStart && ids.every(k => bal[k] <= 0.5)) break;
+  }
+  tot.comp = months.reduce((s, r) => s + (r.m > 0 ? r.comp : 0), 0);   // компенсация за октябрь (m=0) относится к процентам до начала учёта
+  return { months, ends, tot, intBy, lastLogged };
+}
+function balancesAt(S, sim, m) {
+  const o = {};
+  Object.keys(S.loans).forEach(k => { o[k] = m < 0 ? (startM(S.loans[k]) === 0 ? S.loans[k].bal0 : 0) : (sim.months[m] ? sim.months[m].loans[k].bal : 0); });
+  return o;
+}
+function monthAtDate(sim, ms) { let r = -1; for (const x of sim.months) { if (x.date <= ms) r = x.m; else break; } return r; }
+//#engine-end
+
+// ---------- интерфейс ----------
+const KEY = 'kredit-tracker-v1';
+let S, storageOk = true, ui = { tab: 'plan', month: null, extra: 0, det: {}, flash: '' };
+const $ = (s) => document.querySelector(s);
+// Тема: по умолчанию светлая, выбор запоминается на этом устройстве (тот же ключ, что в калькуляторе).
+const THEME_KEY = 'prepay-calc-theme';
+// Мини-приложение Telegram (страница открыта из бота)
+const TG = window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData ? window.Telegram.WebApp : null;
+if (TG) { try { TG.ready(); TG.expand(); } catch (e) {} }
+function sendTheme() {   // калькулятор во вкладке получает тему от трекера
+  const f = $('#calcFrame'); try { if (f && f.contentWindow) f.contentWindow.postMessage({ type: 'theme', value: theme }, '*'); } catch (e) {}
+}
+function applyTheme(t) {
+  document.documentElement.setAttribute('data-theme', t);
+  $('#themeBtn').setAttribute('aria-pressed', String(t === 'dark'));
+  $('#themeLbl').textContent = t === 'dark' ? 'Светлая тема' : 'Тёмная тема';
+  sendTheme();
+}
+let theme = 'light';
+try { const t0 = localStorage.getItem(THEME_KEY); theme = t0 ? (t0 === 'dark' ? 'dark' : 'light') : (TG && TG.colorScheme === 'dark' ? 'dark' : 'light'); } catch (e) {}
+applyTheme(theme);
+$('#calcFrame').addEventListener('load', sendTheme);
+$('#themeBtn').addEventListener('click', () => {
+  theme = theme === 'dark' ? 'light' : 'dark';
+  applyTheme(theme);
+  try { localStorage.setItem(THEME_KEY, theme); } catch (e) {}
+});
+const fmt = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 0 });
+const fmt2 = new Intl.NumberFormat('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const NB = ' ';
+const money = (v) => fmt.format(Math.round(v)) + NB + '₽';
+const moneyIn = (v) => (v === undefined || v === null || v === '') ? '' : fmt2.format(v).replace(/ /g, ' ');
+const mln = (v) => (v / 1e6).toFixed(2).replace('.', ',') + NB + 'млн' + NB + '₽';
+const esc = (s) => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const parseNum = (s) => { const t = String(s).replace(/[\s ]/g, '').replace(',', '.'); if (t === '') return null; const n = Number(t); return isFinite(n) ? n : null; };
+function plural(n, f) { const a = Math.abs(n) % 100, b = a % 10; if (a > 10 && a < 20) return f[2]; if (b > 1 && b < 5) return f[1]; if (b === 1) return f[0]; return f[2]; }
+function monthsText(n) {
+  const y = Math.floor(n / 12), m = n % 12, p = [];
+  if (y) p.push(y + NB + plural(y, ['год', 'года', 'лет']));
+  if (m || !y) p.push(m + NB + plural(m, ['месяц', 'месяца', 'месяцев']));
+  return p.join(' ');
+}
+
+function clone(o) { return JSON.parse(JSON.stringify(o)); }
+// В приложении для ПК данные лежат в файле (window.trackerStore из preload.js), в браузере — в localStorage.
+// В приложении для Android файл ведёт сама программа (window.AndroidStore), здесь — переходник к тому же виду.
+// В Telegram данные лежат в облаке Telegram (CloudStorage): одни и те же на телефоне и компьютере.
+// Значение ключа — до 4096 символов, поэтому JSON режется на части; новая версия пишется рядом, затем переключается meta.
+if (TG && !window.trackerStore && TG.CloudStorage && TG.isVersionAtLeast && TG.isVersionAtLeast('6.9')) {
+  const cs = TG.CloudStorage;
+  const get = (keys) => new Promise((ok, no) => cs.getItems(keys, (err, v) => err ? no(err) : ok(v || {})));
+  const set = (k, v) => new Promise((ok, no) => cs.setItem(k, v, (err) => err ? no(err) : ok()));
+  const del = (keys) => new Promise((ok) => keys.length ? cs.removeItems(keys, () => ok()) : ok());
+  let meta = null, queue = Promise.resolve(), timer = null, pending = null, waiters = [];
+  const write = async (text) => {
+    const parts = text.match(/[\s\S]{1,3500}/g) || [''], g = meta && meta.g ? (meta.g % 1000) + 1 : 1;
+    for (let i = 0; i < parts.length; i++) await set('g' + g + '_' + i, parts[i]);
+    const old = meta; meta = { g, n: parts.length };
+    await set('meta', JSON.stringify(meta));
+    if (old && old.g !== g) await del(Array.from({ length: old.n }, (_, i) => 'g' + old.g + '_' + i));
+  };
+  const flush = () => {
+    clearTimeout(timer); if (pending === null) return;
+    const t = pending, w = waiters; pending = null; waiters = [];
+    queue = queue.then(() => write(t)).then(() => w.forEach(x => x[0]()), (e) => w.forEach(x => x[1](e)));
+  };
+  document.addEventListener('visibilitychange', () => { if (document.hidden) flush(); });
+  window.trackerStore = {
+    telegram: true,
+    load: async () => {
+      const m = (await get(['meta'])).meta;
+      if (!m) return { text: null, file: 'облако Telegram' };
+      meta = JSON.parse(m);
+      const keys = Array.from({ length: meta.n }, (_, i) => 'g' + meta.g + '_' + i), v = await get(keys);
+      return { text: keys.map(k => v[k] || '').join(''), file: 'облако Telegram' };
+    },
+    save: (text) => new Promise((ok, no) => { pending = text; waiters.push([ok, no]); clearTimeout(timer); timer = setTimeout(flush, 500); }),
+    openFolder: () => {}, chooseFolder: async () => null
+  };
+}
+if (window.AndroidStore && !window.trackerStore) {
+  window.trackerStore = {
+    android: true,
+    load: async () => JSON.parse(window.AndroidStore.load()),
+    save: async (text) => { if (!window.AndroidStore.save(text)) throw new Error('save'); },
+    openFolder: () => {}, chooseFolder: async () => null
+  };
+}
+let appInfo = null, loadFailed = false;
+async function load() {
+  let raw = null;
+  if (window.trackerStore) {
+    try { const r = await window.trackerStore.load(); raw = r.text; appInfo = { file: r.file, dir: r.dir, android: !!window.trackerStore.android, telegram: !!window.trackerStore.telegram }; }
+    catch (e) { loadFailed = true; }
+  } else {
+    try { raw = localStorage.getItem(KEY); } catch (e) { storageOk = false; }
+  }
+  let s = null;
+  if (raw) { try { s = JSON.parse(raw); } catch (e) { s = null; if (window.trackerStore) loadFailed = true; } }
+  S = merge(clone(DEFAULTS), s || {});
+}
+function badge(kind, text) { const b = $('#storage'); b.className = kind === 'ok' ? 'badge' : 'badge warn'; b.textContent = text; }
+function syncIds(B) {
+  const mm = String(B.settings.startMonth || '2026-09').split('-').map(Number);
+  if (mm[0] && mm[1]) START = { y: mm[0], mo: mm[1] };   // m=0 — платёж в месяце после startMonth
+  PAYDAY = Math.min(31, Math.max(1, Math.round(Number(B.settings.payDay)) || 28));
+  if (B.settings.orderMode !== 'auto') B.settings.order = baseOrder(B);
+  DISPLAY = Object.keys(B.loans);
+}
+function merge(base, add) {
+  if (add.settings) Object.assign(base.settings, add.settings);
+  if (add.settings && add.settings.orderMode === undefined) base.settings.orderMode = 'manual';   // старые данные: сохраняем ваш порядок
+  if (add.settings && add.settings.startMonth === undefined) { base.settings.startMonth = '2026-09'; base.settings.payDay = 28; }   // данные первых версий велись от 28.09.2026
+  if (add.loans) {
+    const nl = {};
+    Object.keys(add.loans).forEach(k => { nl[k] = Object.assign({}, base.loans[k] || {}, add.loans[k]); if (nl[k].comp === undefined) nl[k].comp = k === 'Mort'; });
+    base.loans = nl;
+  }
+  if (add.log) base.log = add.log;
+  syncIds(base);
+  return base;
+}
+function save() {
+  if (loadFailed) { badge('warn', 'файл данных не прочитан — запись отключена'); return; }   // не затираем файл, который не смогли прочитать
+  if (window.trackerStore) {
+    window.trackerStore.save(JSON.stringify(S)).then(() => badge('ok', appInfo && appInfo.telegram ? 'сохранено' : 'сохранено в файл')).catch(() => badge('warn', 'не удалось записать файл данных'));
+    return;
+  }
+  try { localStorage.setItem(KEY, JSON.stringify(S)); storageOk = true; } catch (e) { storageOk = false; }
+  if (storageOk) badge('ok', 'сохранено в этом браузере'); else badge('warn', 'браузер не сохраняет — пользуйтесь экспортом');
+}
+
+function ctx(plan) { const sim = plan ? buildPlan().sim : simulate(S, false, true), base = simulate(S, true); return { sim, base }; }
+function nextPaymentM() {
+  const now = Date.now(); let m = 0; while (dt(m) + DAY < now && m < 400) m++;
+  while (hasEntry(S.log[keyOf(m)]) && m < 400) m++;      // первый ещё не отмеченный месяц
+  return m;
+}
+
+// ---------- график ----------
+function chartSVG(c, markM, markLabel, legA) {
+  const ids = Object.keys(S.loans);
+  const tot = (sim) => [ids.reduce((s, k) => s + (startM(S.loans[k]) === 0 ? S.loans[k].bal0 : 0), 0)].concat(sim.months.map(r => ids.reduce((s, k) => s + r.loans[k].bal, 0)));
+  const a = tot(c.sim), b = tot(c.base), n = Math.max(a.length, b.length);
+  const narrow = window.innerWidth < 640, W = narrow ? 400 : 720, H = narrow ? 240 : 250, pl = 44, pr = 10, pt = 12, pb = 28;
+  const max = Math.max(...a, ...b) || 1;
+  const x = (i) => pl + (W - pl - pr) * i / Math.max(1, n - 1);
+  const y = (v) => pt + (H - pt - pb) * (1 - v / max);
+  const path = (arr) => arr.map((v, i) => (i ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(v).toFixed(1)).join(' ');
+  let g = '';
+  for (let i = 0; i <= 4; i++) { const v = max * i / 4; g += `<line x1="${pl}" x2="${W - pr}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text class="ax" x="${pl - 6}" y="${y(v) + 4}" text-anchor="end">${(v / 1e6).toFixed(1)}</text>`; }
+  for (let i = 0; i < n; i++) { const m = i - 1; const d = new Date(dt(m)); if (d.getUTCMonth() === 0 && i > 0) g += `<text class="ax" x="${x(i)}" y="${H - 8}" text-anchor="middle">${d.getUTCFullYear()}</text>`; }
+  let mark = '';
+  if (markM !== undefined && markM >= -1 && markM + 1 < n) {
+    const xm = x(markM + 1);
+    mark = `<line x1="${xm}" x2="${xm}" y1="${pt}" y2="${H - pb}" stroke="var(--warn)" stroke-dasharray="4 4"/><text class="ax" x="${xm + 5}" y="${pt + 12}" style="fill:var(--warn)">${esc(markLabel || '')}</text>`;
+  }
+  return `<div class="chart"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Общий долг по месяцам">${g}
+    <path d="${path(b)}" fill="none" stroke="var(--c-old)" stroke-width="2.5"/>
+    <path d="${path(a)}" fill="none" stroke="var(--c-new)" stroke-width="3"/>${mark}</svg>
+    <div class="legend"><span><i style="background:var(--c-new)"></i>${legA || 'с вашими внесёнными взносами'}</span><span><i style="background:var(--c-old)"></i>без досрочных</span><span>по оси — млн ₽</span></div></div>`;
+}
+
+function hasDebt() { return DISPLAY.some(k => S.loans[k].bal0 > 0.5); }
+function emptyCard() {
+  return `<section class="card"><h2>Начните с исходных данных</h2><div class="note" style="margin-top:0">1. Добавьте кредиты: ставку, ежемесячный платёж и остаток долга.<br>2. Укажите, сколько всего можете отдавать на кредиты в месяц.<br>После этого трекер подберёт лучший план досрочного погашения.</div>
+    <div class="row"><button class="btn" data-goto="set">Ввести исходные данные</button></div></section>`;
+}
+
+// ---------- вкладка «Взносы» ----------
+function renderPay() {
+  const c = ctx(true); if (ui.month === null) ui.month = nextPaymentM();
+  const m = ui.month, key = keyOf(m), entry = S.log[key];
+  const rec = c.sim.months[m];
+  let opts = '';
+  const maxM = Math.max(c.base.months.length + 1, ui.month + 1);
+  for (let i = 0; i <= maxM; i++) { const k = keyOf(i); const mark = hasEntry(S.log[k]) ? ' ✓' : ''; opts += `<option value="${i}" ${i === m ? 'selected' : ''}>${labelFull(i)}${mark}</option>`; }
+  let rows = '';
+  DISPLAY.forEach(k => {
+    const L = S.loans[k], r = rec ? rec.loans[k] : null;
+    const closed = !r || (r.open <= 0.5);
+    const exVal = entry && entry.extra && entry.extra[k] ? moneyIn(entry.extra[k]) : '';
+    const syVal = entry && entry.sync && typeof entry.sync[k] === 'number' ? moneyIn(entry.sync[k]) : '';
+    const planV = r && !rec.fact && r.extra > 0.5 ? fmt.format(Math.round(r.extra)) + ' (план)' : '';
+    const xs = entry && entry.xsplit ? entry.xsplit[k] : null;
+    const eiVal = xs && typeof xs.int === 'number' ? moneyIn(xs.int) : '';
+    const epVal = xs && typeof xs.princ === 'number' ? moneyIn(xs.princ) : '';
+    const dis = closed ? 'disabled' : '';
+    rows += `<tr><td>${esc(L.name)}${closed ? ' <span class="note">' + (m < startM(L) ? 'подключится с ' + label(startM(L)) : 'закрыт') + '</span>' : ''}</td>
+      <td>${closed ? '—' : money(L.pay)}</td>
+      <td><input type="text" inputmode="decimal" id="ex_${k}" value="${exVal}" placeholder="${esc(planV || '0')}" ${dis}></td>
+      <td><input type="text" inputmode="decimal" id="ei_${k}" value="${eiVal}" placeholder="0" ${dis}></td>
+      <td><input type="text" inputmode="decimal" id="ep_${k}" value="${epVal}" placeholder="остальное" ${dis}></td>
+      <td><input type="text" inputmode="decimal" id="sy_${k}" value="${syVal}" placeholder="по банку" ${dis}></td>
+      <td>${closed ? '—' : money(r.bal)}</td></tr>`;
+  });
+  const status = hasEntry(entry)
+    ? `<div class="alert ok">Месяц отмечен как внесённый. Можно поправить суммы и сохранить ещё раз.</div>`
+    : `<div class="alert">Этот месяц ещё не отмечен. В графах серым показан прогноз по плану — нажмите «Подставить план» или впишите, сколько внесли на самом деле.</div>`;
+  // история
+  const keys = Object.keys(S.log).filter(k => hasEntry(S.log[k])).sort();
+  let hist = '';
+  keys.forEach(k => {
+    const e = S.log[k], mm = mOfKey(k); let t = 0;
+    const cells = DISPLAY.map(id => { const v = (c.sim.months[mm] && c.sim.months[mm].loans[id].extra) || 0; t += v; return `<td>${v > 0.005 ? money(v) : '—'}</td>`; }).join('');
+    hist += `<tr><td>${labelFull(mm)}</td>${cells}<td><b>${money(t)}</b></td><td><button class="btn small" data-act="edit" data-m="${mm}">Править</button> <button class="btn small danger" data-act="del" data-m="${mm}">Удалить</button></td></tr>`;
+  });
+  const head = DISPLAY.map(id => `<th>${esc(S.loans[id].name)}</th>`).join('');
+  return `
+  <section class="card">
+    <h2>Что внесено в банк</h2>
+    <label class="f">Месяц (дата платежа)<select id="selMonth">${opts}</select></label>
+    ${status}
+    <div class="table-scroll"><table>
+      <thead>
+        <tr><th rowspan="2">Кредит</th><th rowspan="2">Платёж по графику</th><th colspan="3" class="grp">Досрочный платёж</th><th rowspan="2">Остаток по банку после всего, ₽</th><th rowspan="2">Остаток по трекеру</th></tr>
+        <tr><th>внесено всего, ₽</th><th>из него в проценты, ₽</th><th>из него в основной долг, ₽</th></tr>
+      </thead>
+      <tbody>${rows}</tbody></table></div>
+    <div class="row">
+      <button class="btn" id="btnPlan">Подставить план</button>
+      <span class="note" style="margin:0">или раздать сумму по приоритету:</span>
+      <input type="text" inputmode="decimal" id="distTotal" placeholder="всего, ₽">
+      <button class="btn" id="btnDist">Распределить</button>
+    </div>
+    <div class="row">
+      <button class="btn primary" id="btnSave">Сохранить месяц</button>
+      <button class="btn danger" id="btnClear">Очистить месяц</button>
+    </div>
+    <div class="note"><b>Платёж по графику</b> считается сам (проценты по дням, как в банке).<br>
+      <b>Досрочный платёж:</b> если вы внесли его 28-го сразу после списания, он целиком уходит в основной долг, и графы «из него в проценты / в основной долг» можно не заполнять. Если вносили в другой день (например 15-го), банк мог часть взять в проценты: впишите, как он разделил. Достаточно заполнить одну из двух граф, вторая посчитается как остаток от суммы. Проценты из досрочного тоже идут в расчёт процентов и компенсации по ипотеке.<br>
+      Если разбивки нет, хватит «Остатка по банку после всего» (строка из «Графика платежей»). Месяц, сохранённый пустым, считается месяцем без досрочных.</div>
+  </section>
+  <section class="card">
+    <h2>Что уже внесено</h2>
+    ${keys.length ? `<div class="table-scroll"><table><thead><tr><th>Месяц</th>${head}<th>Всего</th><th></th></tr></thead><tbody>${hist}</tbody></table></div>` : '<div class="note">Пока ничего не отмечено. Расчёт идёт по плану из настроек.</div>'}
+  </section>`;
+}
+function readMonthForm() {
+  const extra = {}, sync = {}, xsplit = {};
+  DISPLAY.forEach(k => {
+    const e = $('#ex_' + k), s = $('#sy_' + k), xi = $('#ei_' + k), xp = $('#ep_' + k); if (!e || e.disabled) return;
+    const ev = parseNum(e.value), sv = parseNum(s.value), xiv = parseNum(xi.value), xpv = parseNum(xp.value);
+    if (ev && ev > 0) extra[k] = ev;
+    if (sv !== null && sv >= 0) sync[k] = sv;
+    if ((xiv !== null && xiv >= 0) || (xpv !== null && xpv >= 0)) {
+      xsplit[k] = {}; if (xiv !== null && xiv >= 0) xsplit[k].int = xiv; if (xpv !== null && xpv >= 0) xsplit[k].princ = xpv;
+      if (!extra[k]) extra[k] = (xiv || 0) + (xpv || 0);      // сумму можно не писать: она равна сумме частей
+    }
+  });
+  return { extra, sync, xsplit, done: true };
+}
+
+// ---------- план: подбор стратегии ----------
+function metr(sim) {
+  const e = Object.values(sim.ends), def = sim.months.filter(r => !r.fact && r.shortfall > 1);
+  const area = sim.months.reduce((q, r) => q + (r.fact ? 0 : r.mins), 0);     // сумма обязательных платежей впереди: чем меньше, тем быстрее освобождаются платежи
+  return { area, end: e.length ? Math.max(...e) : 0, net: sim.tot.int - sim.tot.comp, def: def.length, defMax: def.length ? Math.max(...def.map(r => r.shortfall)) : 0, defFrom: def.length ? def[0].m : null };
+}
+// лучше = меньше месяцев с нехваткой денег на платежи; затем по цели: «free» — быстрее освобождаются платежи, «save» — меньше процентов из кармана
+function better(a, b, eps, goal) {
+  eps = eps || 0; if (a.def !== b.def) return a.def < b.def;
+  if (goal === 'free') { if (Math.abs(a.area - b.area) > 1) return a.area < b.area; return a.net < b.net - eps; } if (a.net < b.net - eps) return true; return Math.abs(a.net - b.net) <= eps && eps === 0 && a.end < b.end; }
+function permutations(a) { if (a.length <= 1) return [a]; const r = []; a.forEach((x, i) => permutations(a.filter((_, j) => j !== i)).forEach(p => r.push([x].concat(p)))); return r; }
+function bestOrder(goal) {
+  const ids = DISPLAY.filter(k => S.loans[k].bal0 > 0.5), byRate = ids.slice().sort((a, b) => S.loans[b].rate - S.loans[a].rate);
+  if (ids.length < 2 || ids.length > 6) return byRate;
+  let best = null;
+  [byRate].concat(permutations(ids)).forEach(o => { const m = metr(simulate(S, false, false, { order: o })); if (!best || better(m, best.m, 0, goal)) best = { o, m }; });
+  return best.o;
+}
+// Кто первым получает досрочное в месяце m по плану
+function primaryAt(P, sim, m) {
+  const r = sim.months[m]; if (!r) return null;
+  if (P.targets[m] && r.loans[P.targets[m]].afterPay > 0.5) return P.targets[m];
+  return orderFor(S, P.order, r.comp > 0.005).find(k => r.loans[k].afterPay > 0.5) || null;
+}
+// План: лучший порядок, затем по месяцам проверяем — не выгоднее ли в этом месяце вносить в другой кредит.
+let planCache = {};
+function buildPlan(goal) {
+  goal = goal || S.settings.goal || 'free';
+  const key = JSON.stringify([S.loans, S.settings, S.log]);
+  if (planCache[goal] && planCache[goal].key === key) return planCache[goal].val;
+  const order = bestOrder(goal), targets = {}, P = { order, targets, goal };
+  let cur = simulate(S, false, false, { order, targets }), cm = metr(cur);
+  for (let m = Math.max(0, cur.lastLogged + 1); goal === 'save' && m < cur.months.length && m < 400; m++) {   // помесячная донастройка — только для максимальной экономии
+    const r = cur.months[m];
+    if (r.fact || DISPLAY.reduce((q, k) => q + r.loans[k].extra, 0) < 0.5) continue;
+    let prim = primaryAt(P, cur, m);
+    const tryT = (t) => { const tg = Object.assign({}, targets, { [m]: t }), sim = simulate(S, false, false, { order, targets: tg }); return { sim, mt: metr(sim) }; };
+    const prev = m > 0 && !cur.months[m - 1].fact ? primaryAt(P, cur, m - 1) : null;      // по возможности продолжаем гасить тот же кредит, что в прошлом месяце
+    if (prev && prev !== prim && r.loans[prev].afterPay > 0.5) {
+      const x = tryT(prev);
+      if (x.mt.def <= cm.def && x.mt.net <= cm.net + 1000) { targets[m] = prev; cur = x.sim; cm = x.mt; prim = prev; }
+    }
+    for (const t of DISPLAY) {
+      if (t === prim || !(r.loans[t].afterPay > 0.5)) continue;
+      const x = tryT(t);
+      if (better(x.mt, cm, !prev || t === prev ? 1000 : 5000)) { targets[m] = t; cur = x.sim; cm = x.mt; prim = t; }
+    }
+  }
+  P.sim = cur; P.m = cm;
+  // зависит ли лучший кредит для денег сверх плана от суммы
+  const mNow = nextPaymentM();
+  P.anyAmount = [10000, 50000, 200000].every(a => { const ad = extraAdvice(P, mNow, a); return !ad || !ad.t || ad.t === primaryAt(P, cur, mNow); });
+  planCache[goal] = { key, val: P };
+  return P;
+}
+function extraAdvice(P, m, amount) {
+  const r = P.sim.months[m]; if (!r) return null;
+  const ids = DISPLAY.filter(k => r.loans[k].afterPay > 0.5); if (!ids.length) return null;
+  const run = (t) => { const sim = simulate(S, false, false, { order: P.order, targets: P.targets, extra: { m, amount, target: t } }); return { t, sim, m: metr(sim) }; };
+  let best = run(null);
+  ids.forEach(t => { const x = run(t); if (better(x.m, best.m, 300, P.goal)) best = x; });
+  best.parts = ids.map(k => ({ k, v: Math.round(((best.sim.months[m].lumpBy || {})[k] || 0) * 100) / 100 })).filter(x => x.v > 0.5);
+  return best;
+}
+
+// ---------- вкладка «План» ----------
+function renderPlan() {
+  const P = buildPlan(), sim = P.sim, none = simulate(S, true), mc = P.m, mn = metr(none);
+  const facts = simulate(S, false, true), lf = facts.lastLogged, curB = balancesAt(S, facts, lf);
+  const sumNow = DISPLAY.reduce((q, k) => q + curB[k], 0), mNow = nextPaymentM(), r = sim.months[mNow];
+  const flash = ui.flash ? `<div class="alert ok">${ui.flash}</div>` : ''; ui.flash = '';
+  const hero = `<div class="hero"><div class="grid">
+    <div><div class="k">Свободны от долгов</div><div class="v good">${label(mc.end)}</div><div class="k">без досрочных — ${label(mn.end)}</div></div>
+    <div><div class="k">Экономия на процентах</div><div class="v good">${mln(Math.max(0, mn.net - mc.net))}</div><div class="k">если следовать плану</div></div>
+    <div><div class="k">Долг сейчас</div><div class="v">${mln(sumNow)}</div><div class="k">${lf >= 0 ? 'после платежа ' + labelFull(lf) : 'на ' + baseLabel()}</div></div>
+  </div></div>`;
+  if (!r || sumNow < 0.5 && lf >= 0) return flash + hero + `<section class="card"><div class="alert ok" style="margin:0"><b>Все кредиты закрыты.</b> Новые можно добавить в «Исходных данных».</div></section>`;
+  // этот месяц
+  const ids = DISPLAY.filter(k => r.loans[k].open > 0.5);
+  let tp = 0, te = 0;
+  const rows = ids.map(k => { const L = r.loans[k]; tp += L.pay; te += L.extra;
+    return `<tr><td>${esc(S.loans[k].name)}</td><td>${money(L.pay)}</td><td>${L.extra > 0.5 ? '<b class="pos">' + money(L.extra) + '</b>' : '—'}</td></tr>`; }).join('');
+  const short = r.shortfall > 1 ? `<div class="alert bad">В этом месяце не хватает ${money(r.shortfall)} на платежи по графику.</div>` : '';
+  const noExtra = te < 0.5 && !short ? `<div class="note">Досрочных в этом месяце нет: на кредиты отведено ${money(S.settings.budget + r.comp)}, а платежи по графику — ${money(tp)}. Сумму можно изменить в «Исходных данных».</div>` : '';
+  const prim = primaryAt(P, sim, mNow);
+  const extraBlock = !prim ? '' : P.anyAmount
+    ? `<div class="note">Появились деньги сверх плана? Любую сумму вносите туда же: <b>${esc(S.loans[prim].name)}</b>. Если этот кредит закроется, остаток — в следующий по плану.</div>`
+    : `<h2 style="margin-top:22px">Есть деньги сверх плана?</h2>
+       <div class="row" style="margin-top:0"><input type="text" inputmode="decimal" id="extraAmt" value="${ui.extra ? moneyIn(ui.extra) : ''}" placeholder="сумма, ₽"></div>
+       <div id="extraBox" style="margin-top:12px">${extraHtml()}</div>`;
+  const month = `<section class="card"><h2>В этом месяце — ${labelFull(mNow)}</h2>${short}
+    <div class="table-scroll"><table><thead><tr><th>Кредит</th><th>По графику</th><th>Досрочно</th></tr></thead><tbody>${rows}
+      <tr class="total"><td>Итого</td><td>${money(tp)}</td><td>${te > 0.5 ? money(te) : '—'}</td></tr></tbody></table></div>${noExtra}${r.bonus > 0 && te > 0.5 ? '<div class="note">В досрочное входит премия ' + money(r.bonus) + '.</div>' : ''}
+    <div class="row"><button class="btn" id="btnFollow" data-m="${mNow}">Внёс по плану</button><button class="btn small" data-goto="pay" data-m="${mNow}">Внёс по-другому</button></div>
+    ${extraBlock}</section>`;
+  // стратегия по этапам
+  const stages = [];
+  for (let m = mNow; m < sim.months.length; m++) {
+    const x = sim.months[m]; let k = null, v = 0;
+    DISPLAY.forEach(id => { if (x.loans[id].extra > v + 0.5) { v = x.loans[id].extra; k = id; } });
+    if (!k) continue;
+    const last = stages[stages.length - 1];
+    if (last && last.k === k && last.to === m - 1) last.to = m; else stages.push({ k, from: m, to: m });
+  }
+  const stTxt = stages.slice(0, 8).map(g => `<li><b>${label(g.from)}${g.to > g.from ? ' – ' + label(g.to) : ''}</b> — досрочно: ${esc(S.loans[g.k].name)}</li>`).join('');
+  const closeRows = DISPLAY.filter(k => S.loans[k].bal0 > 0.5).sort((a, b) => (sim.ends[a] ?? 1e9) - (sim.ends[b] ?? 1e9)).map(k =>
+    `<tr><td>${esc(S.loans[k].name)}</td><td>${S.loans[k].rate}%</td><td>${money(curB[k])}</td><td><b>${sim.ends[k] !== undefined ? label(sim.ends[k]) : '—'}</b></td><td>${none.ends[k] !== undefined ? label(none.ends[k]) : '—'}</td></tr>`).join('');
+  const defW = mc.def ? `<div class="alert bad">С ${label(mc.defFrom)} денег не хватит на платежи по графику (до ${money(mc.defMax)} в месяц). Увеличьте сумму на кредиты в «Исходных данных».</div>` : '';
+  const ce = S.settings.compOn && DISPLAY.some(k => S.loans[k].comp);
+  const alt = buildPlan(P.goal === 'free' ? 'save' : 'free'), dNet = P.m.net - alt.m.net;
+  const pf = P.goal === 'free' ? P : alt, ps = P.goal === 'free' ? alt : P;
+  const firstClose = (Q) => { const e = DISPLAY.filter(k => Q.sim.ends[k] !== undefined).sort((a, b) => Q.sim.ends[a] - Q.sim.ends[b])[0]; return e ? esc(S.loans[e].name) + ' закроется в ' + label(Q.sim.ends[e]) : ''; };
+  const goalSeg = Math.abs(dNet) < 1000 && pf.order.join() === ps.order.join() ? '' : `<div class="goalseg">
+      <button data-goal="free" aria-pressed="${P.goal === 'free'}"><b>Быстрее освободить платежи</b><small>${firstClose(pf)} · экономия ${mln(Math.max(0, mn.net - pf.m.net))}</small></button>
+      <button data-goal="save" aria-pressed="${P.goal === 'save'}"><b>Максимальная экономия</b><small>${firstClose(ps)} · экономия ${mln(Math.max(0, mn.net - ps.m.net))}</small></button></div>`;
+  const goalTxt = P.goal === 'free'
+    ? 'Сначала закрываются кредиты, которые освобождают больше денег в месяц — появляется запас на непредвиденное.'
+    : 'Деньги идут туда, где экономят больше всего процентов.';
+  const strat = `<section class="card"><h2>Стратегия</h2>${goalSeg}${defW}
+    <ul style="margin:0 0 6px;padding-left:20px;line-height:1.8">${stTxt || '<li>Досрочных по плану нет — только платежи по графику.</li>'}</ul>
+    <div class="note" style="margin-top:4px">${goalTxt}${ce ? ' План учитывает окончание компенсации, чтобы потом хватало денег на платежи.' : ''}</div>
+    <div class="table-scroll" style="margin-top:12px"><table><thead><tr><th>Кредит</th><th>Ставка</th><th>Остаток сейчас</th><th>Закроется по плану</th><th>Без досрочных</th></tr></thead><tbody>${closeRows}</tbody></table></div>
+    ${chartSVG({ sim, base: none }, ce ? monthAtDate(sim, isoMs(S.settings.compEnd)) : undefined, ce ? 'конец компенсации' : '', 'по плану')}</section>`;
+  return flash + hero + month + strat;
+}
+function extraHtml() {
+  const amt = ui.extra > 0 ? ui.extra : 0; ui.extraShown = amt;
+  if (!amt) return '<div class="note" style="margin:0">Введите сумму — подскажу, куда её внести выгоднее.</div>';
+  const P = buildPlan(), mNow = nextPaymentM(), a = extraAdvice(P, mNow, amt);
+  if (!a || !a.parts.length) return '<div class="note" style="margin:0">Вносить некуда — кредиты закрыты.</div>';
+  const sv = P.m.net - a.m.net, mo = P.m.end - a.m.end;
+  return `<div style="font-size:17px;font-weight:600;letter-spacing:-0.02em">${a.parts.map(x => esc(S.loans[x.k].name) + ' — ' + money(x.v)).join('<br>')}</div>
+    <div class="note" style="margin:6px 0 10px">${sv > 0.5 ? 'Проценты меньше ещё на ' + money(sv) : ''}${sv > 0.5 && mo > 0 ? ', ' : ''}${mo > 0 ? 'срок короче на ' + monthsText(mo) : ''}</div>
+    <button class="btn small" id="btnFollow2" data-m="${mNow}" data-add="${a.parts.map(x => x.k + ':' + x.v).join(';')}">Внёс план и эту сумму</button>`;
+}
+let extraTimer = null;
+function updateExtra() {
+  clearTimeout(extraTimer);
+  const i = $('#extraAmt'), v = i ? (parseNum(i.value) || 0) : 0;
+  if (!i || v === ui.extraShown) return;
+  ui.extra = v; $('#extraBox').innerHTML = extraHtml();
+}
+document.addEventListener('input', (e) => { if (e.target.id === 'extraAmt') { clearTimeout(extraTimer); extraTimer = setTimeout(updateExtra, 350); } });
+document.addEventListener('toggle', (e) => { if (e.target.id) ui.det[e.target.id] = e.target.open; }, true);
+
+// ---------- вкладка «Срез на дату» ----------
+function renderSlice() {
+  const c = ctx(), ids = DISPLAY, ms = isoMs(S.settings.slice), m = monthAtDate(c.sim, ms);
+  const pb = balancesAt(S, c.sim, m), bb = balancesAt(S, c.base, m);
+  const next = c.sim.months[m + 1];
+  const isForecast = c.sim.months.slice(0, m + 1).some(r => !r.fact);
+  const dd = S.settings.slice.split('-').reverse().join('.');
+  let rows = '', tp = 0, tb = 0;
+  ids.forEach(k => { tp += pb[k]; tb += bb[k]; rows += `<tr><td>${esc(S.loans[k].name)}</td><td>${pb[k] > 0.5 ? money(pb[k]) : 'закрыт'}</td><td>${bb[k] > 0.5 ? money(bb[k]) : 'закрыт'}</td><td class="${bb[k] - pb[k] > 0.5 ? 'pos' : ''}">${bb[k] - pb[k] > 0.5 ? '−' + money(bb[k] - pb[k]) : '—'}</td></tr>`; });
+  rows += `<tr class="total"><td>Итого</td><td>${money(tp)}</td><td>${money(tb)}</td><td class="pos">−${money(tb - tp)}</td></tr>`;
+  let after = '';
+  if (next) {
+    const pays = ids.filter(k => next.loans[k].pay > 0);
+    const compN = next.comp, budget = S.settings.budget + compN, reserve = budget - next.mins;
+    const lines = pays.map(k => `<tr><td>${esc(S.loans[k].name)}</td><td>${money(next.loans[k].pay)}</td><td>${money(next.loans[k].int)}</td></tr>`).join('');
+    const mortInt = DISPLAY.reduce((q, k) => q + (S.loans[k].comp ? next.loans[k].int : 0), 0);
+    after = `<section class="card"><h2>Месяц сразу после ${dd} (${labelFull(next.m)})</h2>
+      <div class="table-scroll"><table><thead><tr><th>Платёж по графику</th><th>Сумма</th><th>В т. ч. проценты</th></tr></thead><tbody>${lines}
+        <tr class="total"><td>Всего платежей</td><td>${money(next.mins)}</td><td></td></tr></tbody></table></div>
+      <div class="kv" style="margin-top:10px"><span>Бюджет на долги (ваши деньги + помощь)${compN > 0 ? ' с компенсацией ' + money(compN) : ' без компенсации'}</span><b>${money(budget)}</b></div>
+      <div class="kv"><span>${reserve >= 0 ? 'Запас сверх платежей' : 'Не хватает'}</span><b class="${reserve >= 0 ? 'pos' : 'neg'}">${money(Math.abs(reserve))}</b></div>
+      ${mortInt > 0 ? `<div class="kv"><span>Проценты по кредитам с компенсацией в этом месяце${compN > 0 ? ' (возмещает работодатель)' : ' (платите сами)'}</span><span>${money(mortInt)}</span></div>` : ''}
+    </section>`;
+  } else after = `<section class="card"><div class="alert ok">К этой дате все кредиты закрыты.</div></section>`;
+  const lastComp = [...c.sim.months].reverse().find(r => r.comp > 0 && r.date <= ms);
+  const compGot = c.sim.months.filter(r => r.date <= ms && r.m > 0).reduce((s, r) => s + r.comp, 0);
+  const compLeft = Math.max(0, S.settings.compLimit - compGot);
+  const ends = ids.map(k => `<tr><td>${esc(S.loans[k].name)}</td><td>${c.sim.ends[k] !== undefined ? label(c.sim.ends[k]) : '—'}</td><td>${c.base.ends[k] !== undefined ? label(c.base.ends[k]) : '—'}</td></tr>`).join('');
+  return `
+  <section class="card"><h2>Срез на дату</h2>
+    <div class="row" style="margin-top:0"><label class="f" style="margin:0">Дата среза<input type="date" id="sliceDate" value="${S.settings.slice}"></label></div>
+    <div class="chips"><button class="btn small" data-slice="2029-03-31">Конец компенсации 31.03.2029</button>
+      <button class="btn small" data-slice="2027-12-31">31.12.2027</button><button class="btn small" data-slice="2028-12-31">31.12.2028</button>
+      <button class="btn small" data-slice="${new Date().toISOString().slice(0, 10)}">Сегодня</button></div>
+    ${isForecast ? '<div class="alert">В срез входят месяцы, которые вы ещё не отметили: по ним учтены только платежи по графику, без новых досрочных.</div>' : '<div class="alert ok">Срез целиком по отмеченным вами месяцам.</div>'}
+    <div class="note" style="margin:0 0 8px">Последний платёж до этой даты: ${m >= 0 ? labelFull(m) : 'ещё не было'} (остаток после платежа и досрочных).</div>
+    <div class="table-scroll"><table><thead><tr><th>Кредит</th><th>Остаток по трекеру</th><th>Без досрочных</th><th>Разница</th></tr></thead><tbody>${rows}</tbody></table></div>
+    <div class="note">Компенсация работодателя к этой дате получена: ${money(compGot)}, остаток лимита: ${money(compLeft)}${S.settings.compOn ? '' : ' (компенсация выключена в настройках)'}.</div>
+  </section>
+  ${after}
+  <section class="card"><h2>Когда закроются кредиты</h2>
+    <div class="table-scroll"><table><thead><tr><th>Кредит</th><th>С учётом внесённых</th><th>Без досрочных</th></tr></thead><tbody>${ends}</tbody></table></div></section>
+  <section class="card"><h2>Общий долг и дата среза</h2>${chartSVG(c, m, dd)}</section>`;
+}
+
+// ---------- вкладка «Настройки» ----------
+function renderSet() {
+  const st = S.settings;
+  const lrows = DISPLAY.map(k => { const L = S.loans[k]; return `<tr><td><input class="l" type="text" data-l="${k}" data-f="name" value="${esc(L.name)}"></td>
+    <td><input type="text" inputmode="decimal" data-l="${k}" data-f="rate" value="${L.rate}"></td>
+    <td><input type="text" inputmode="decimal" data-l="${k}" data-f="pay" value="${moneyIn(L.pay)}"></td>
+    <td><input type="text" inputmode="decimal" data-l="${k}" data-f="bal0" value="${moneyIn(L.bal0)}"></td>
+    <td><select data-l="${k}" data-f="comp"><option value="0" ${!L.comp ? 'selected' : ''}>нет</option><option value="1" ${L.comp ? 'selected' : ''}>да</option></select></td>
+    <td><button class="btn small danger" data-act="delloan" data-id="${k}">Удалить</button></td></tr>`; }).join('');
+  const minsNow = DISPLAY.reduce((q, k) => q + (S.loans[k].bal0 > 0.5 ? S.loans[k].pay : 0), 0), compNow = st.compOn && DISPLAY.some(k => S.loans[k].comp) ? st.compFirst : 0;
+  const monthSel = MONTHS_FULL.map((n, i) => `<option value="${i + 1}" ${st.bonusMonth === i + 1 ? 'selected' : ''}>${n}</option>`).join('');
+  return `
+  <section class="card"><h2>Кредиты</h2>
+    <div class="table-scroll"><table><thead><tr><th>Название</th><th>Ставка, %</th><th>Платёж в месяц, ₽</th><th>Основной долг на ${baseLabel()}, ₽</th><th>Проценты возмещает работодатель</th><th></th></tr></thead><tbody>${lrows}</tbody></table></div>
+    <div class="row"><button class="btn" id="btnAddLoan">+ Добавить кредит</button></div>
+    <div class="note">Основной долг на ${baseLabel()} — это остаток после последнего платежа до начала учёта, без накопленных процентов. Если кредит оформлен позже — укажите сумму кредита и месяц первого платежа в блоке «Дата начала учёта». Менять числа у существующих нужно, только если банк пересчитал график. Удаление кредита стирает и его отметки в истории.</div></section>
+  <section class="card"><h2>Сколько можете отдавать на кредиты</h2>
+    <div class="grid2">
+      <label class="f">Своих денег в месяц на кредиты, включая платежи по графику, ₽<input type="text" inputmode="decimal" data-s="budget" value="${moneyIn(st.budget)}"></label>
+      <label class="f">Премия или другой доход раз в год, ₽<input type="text" inputmode="decimal" data-s="bonus" value="${moneyIn(st.bonus)}"></label>
+      <label class="f">Месяц премии<select data-s="bonusMonth">${monthSel}</select></label>
+    </div>
+    <div class="note">Платежи по графику сейчас: ${money(minsNow)}.${compNow > 0 ? ' Компенсация работодателя добавляется сама (сейчас ' + money(compNow) + ').' : ''} ${st.budget + compNow > minsNow ? 'На досрочное остаётся около ' + money(st.budget + compNow - minsNow) + ' в месяц.' : '<b>Этой суммы не хватает на платежи по графику — досрочных не будет.</b>'}</div></section>
+  <section class="card"><details class="more" id="dAcc" ${ui.det.dAcc ? 'open' : ''}><summary>Дата начала учёта и день платежа</summary><div class="in">
+    <div class="grid2">
+      <label class="f">Месяц последнего платежа, от которого ведётся учёт<input type="month" data-s="startMonth" value="${esc(st.startMonth)}"></label>
+      <label class="f">День платежа в месяце<input type="text" inputmode="numeric" data-s="payDay" value="${st.payDay}"></label>
+    </div>
+    <div class="note">Остатки кредитов в таблице выше — на дату последнего платежа этого месяца. Отметки по месяцам хранятся по календарным месяцам и при смене этих настроек не пропадают.</div>
+    <div class="grid2" style="margin-top:14px">${DISPLAY.map(k => `<label class="f">${esc(S.loans[k].name)}: первый платёж (если кредит новый)<input type="month" data-l="${k}" data-f="start" value="${esc(S.loans[k].start || '')}"></label>`).join('')}</div></div></details></section>
+  <section class="card"><details class="more" id="dComp" ${ui.det.dComp ? 'open' : ''}><summary>Компенсация процентов работодателем</summary><div class="in">
+    <div class="grid2">
+      <label class="f">Учитывать компенсацию<select data-s="compOn"><option value="1" ${st.compOn ? 'selected' : ''}>да</option><option value="0" ${!st.compOn ? 'selected' : ''}>нет</option></select></label>
+      <label class="f">Последняя выплата (дата)<input class="l" type="date" data-s="compEnd" value="${st.compEnd}"></label>
+      <label class="f">Остаток лимита компенсации в первый месяц учёта, ₽<input type="text" inputmode="decimal" data-s="compLimit" value="${moneyIn(st.compLimit)}"></label>
+      <label class="f">Компенсация в ближайшей зарплате, ₽<input type="text" inputmode="decimal" data-s="compFirst" value="${moneyIn(st.compFirst)}"></label>
+    </div>
+    <div class="note">Компенсация = проценты по отмеченным кредитам за прошлый месяц, пока не кончится лимит или дата. Она добавляется к сумме на кредиты.</div></div></details></section>
+  <section class="card"><h2>Файл данных</h2>
+    <div class="row" style="margin-top:0"><button class="btn" id="btnExport">Сохранить копию в файл</button>
+      <label class="btn" style="margin:0">Загрузить копию<input type="file" id="fileImport" accept=".json,application/json" style="display:none"></label>
+      <button class="btn danger" id="btnBlank">Очистить всё</button></div>
+    ${appInfo && appInfo.telegram ? `<div class="note">Данные хранятся в облаке Telegram и одинаковы на телефоне и компьютере. Перенести данные из программы на ПК: там «Сохранить копию в файл», здесь — «Загрузить копию».</div>`
+    : appInfo && appInfo.android ? `<div class="note">Данные хранятся в приложении на телефоне (копии по дням — последние 60). Чтобы перенести данные с компьютера: там «Сохранить копию в файл», перешлите файл на телефон и здесь нажмите «Загрузить копию».</div>`
+    : appInfo ? `<div class="row"><button class="btn" id="btnOpenDir">Открыть папку с данными</button><button class="btn" id="btnChooseDir">Выбрать другую папку</button></div>
+      <div class="note">Данные лежат в файле <b>${esc(appInfo.file)}</b>. Копии по дням (последние 60) — в подпапке backups. Если в новой папке уже есть данные трекера, возьмутся они, если нет — перенесутся текущие.</div>`
+    : `<div class="note">Данные хранятся в браузере на этом компьютере. Если очистите данные сайтов или откроете файл другим браузером, их не будет видно, поэтому раз в месяц сохраняйте копию в файл.</div>`}</section>`;
+}
+
+// ---------- события ----------
+function render() {
+  document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === ui.tab));
+  const isCalc = ui.tab === 'calc';                      // калькулятор живёт в своём окне-вкладке и не сбрасывается при переключении
+  $('#view').hidden = isCalc; $('#calcWrap').hidden = !isCalc;
+  if (isCalc) { const f = $('#calcFrame'); if (!f.dataset.loaded) { f.dataset.loaded = '1'; f.src = 'calculator.html'; } return; }
+  const v = $('#view');
+  v.innerHTML = ui.tab === 'set' ? renderSet() : !hasDebt() ? emptyCard() : ui.tab === 'pay' ? renderPay() : ui.tab === 'slice' ? renderSlice() : renderPlan();
+  labelTables(v);
+}
+// На узком экране таблицы показываются карточками: каждой ячейке нужна подпись из заголовка столбца
+function labelTables(root) {
+  root.querySelectorAll('table').forEach(tb => {
+    const head = tb.tHead; if (!head) return;
+    const grid = [];
+    [...head.rows].forEach((row, ri) => { grid[ri] = grid[ri] || []; let c = 0;
+      [...row.cells].forEach(cell => { while (grid[ri][c]) c++; const cs = cell.colSpan || 1, rs = cell.rowSpan || 1;
+        for (let r = 0; r < rs; r++) for (let k = 0; k < cs; k++) { grid[ri + r] = grid[ri + r] || []; grid[ri + r][c + k] = cell; } c += cs; }); });
+    const labels = (grid[grid.length - 1] || []).map(cell => cell ? cell.textContent.trim() : '');
+    [...tb.tBodies].forEach(b => [...b.rows].forEach(tr => { let c = 0; [...tr.cells].forEach(td => { if (!td.dataset.h) td.dataset.h = labels[c] || ''; c += td.colSpan || 1; }); }));
+    tb.classList.add('stack');
+  });
+}
+$('#tabs').addEventListener('click', (e) => { const b = e.target.closest('button[data-tab]'); if (b) { ui.tab = b.dataset.tab; render(); } });
+document.addEventListener('click', (e) => {
+  const t = e.target.closest('button, label.btn'); if (!t) return;
+  if (t.id === 'btnSave') { S.log[keyOf(ui.month)] = readMonthForm(); save(); render(); return; }
+  if (t.id === 'btnClear') { delete S.log[keyOf(ui.month)]; save(); render(); return; }
+  if (t.id === 'btnPlan') {
+    const rec = ctx(true).sim.months[ui.month]; if (!rec) return;
+    DISPLAY.forEach(k => { ['#ei_', '#ep_'].forEach(p => { const x = $(p + k); if (x && !x.disabled) x.value = ''; }); });
+    DISPLAY.forEach(k => { const i = $('#ex_' + k); if (i && !i.disabled) i.value = rec.loans[k].extra > 0.5 ? moneyIn(Math.round(rec.loans[k].extra * 100) / 100) : ''; });
+    return;
+  }
+  if (t.id === 'btnDist') {
+    const rec = ctx(true).sim.months[ui.month]; let left = parseNum($('#distTotal').value) || 0; if (!rec) return;
+    DISPLAY.forEach(k => { ['#ex_', '#ei_', '#ep_'].forEach(p => { const x = $(p + k); if (x && !x.disabled) x.value = ''; }); });
+    const P = buildPlan(), pr = primaryAt(P, P.sim, ui.month);
+    for (const k of (pr ? [pr] : []).concat(orderFor(S, P.order, rec.comp > 0.005).filter(x => x !== pr))) {
+      const i = $('#ex_' + k); if (!i || i.disabled || left <= 0) continue;
+      const a = Math.min(left, rec.loans[k].afterPay); if (a > 0) { i.value = moneyIn(Math.round(a * 100) / 100); left -= a; }
+    }
+    return;
+  }
+  if (t.dataset.act === 'edit') { ui.month = Number(t.dataset.m); render(); window.scrollTo(0, 0); return; }
+  if (t.dataset.goto) { ui.tab = t.dataset.goto; if (t.dataset.m) ui.month = Number(t.dataset.m); render(); window.scrollTo(0, 0); return; }
+  if (t.dataset.goal) { S.settings.goal = t.dataset.goal === 'save' ? 'save' : 'free'; save(); render(); return; }
+  if (t.id === 'btnFollow' || t.id === 'btnFollow2') {      // отметить месяц по плану (+ сумма сверх плана)
+    const m = Number(t.dataset.m), r = buildPlan().sim.months[m]; if (!r) return;
+    const e = { extra: {}, done: true };
+    DISPLAY.forEach(k => { const v = r.loans[k].extra; if (v > 0.5) e.extra[k] = Math.round(v * 100) / 100; });
+    if (t.dataset.add) t.dataset.add.split(';').forEach(pr => { const [k, v] = pr.split(':'); e.extra[k] = Math.round(((e.extra[k] || 0) + Number(v)) * 100) / 100; });
+    S.log[keyOf(m)] = e; ui.extra = 0; save();
+    const tot = Object.values(e.extra).reduce((q, v) => q + v, 0);
+    ui.flash = `Отмечено: ${labelFull(m)}${tot > 0.5 ? ', досрочно ' + money(tot) : ''}. Точный остаток из банка можно вписать во вкладке «Внести платёж».`;
+    render(); window.scrollTo(0, 0); return;
+  }
+  if (t.dataset.act === 'applyorder') { S.settings.orderMode = 'manual'; S.settings.order = t.dataset.ord.split(',').filter(k => S.loans[k]); syncIds(S); save(); render(); return; }
+  if (t.id === 'btnBlank') {
+    if (!confirm('Удалить все кредиты, отметки и настройки? Сначала можно сохранить копию в файл.')) return;
+    S = clone(DEFAULTS); S.loans = {}; S.log = {};
+    S.settings.startMonth = defaultStart();
+    syncIds(S); ui.month = null; save(); render(); return;
+  }
+  if (t.id === 'btnAddLoan') {
+    const id = 'L' + Date.now().toString(36); S.loans[id] = { name: 'Новый кредит', rate: 15, pay: 0, bal0: 0, comp: false, start: '' };
+    syncIds(S); save(); render(); return;
+  }
+  if (t.dataset.act === 'delloan') {
+    const id = t.dataset.id;
+    if (!confirm('Удалить кредит «' + S.loans[id].name + '»? Его отметки в истории тоже удалятся.')) return;
+    delete S.loans[id];
+    Object.keys(S.log).forEach(k => { const e = S.log[k]; ['extra', 'sync', 'split', 'xsplit'].forEach(f => { if (e && e[f]) delete e[f][id]; }); });
+    syncIds(S); save(); render(); return;
+  }
+  if (t.dataset.act === 'del') { delete S.log[keyOf(Number(t.dataset.m))]; save(); render(); return; }
+  if (t.dataset.slice) { S.settings.slice = t.dataset.slice; save(); render(); return; }
+  if (t.id === 'btnExport') {
+    const name = 'kredit-tracker-' + new Date().toISOString().slice(0, 10) + '.json';
+    if (window.AndroidStore) { const r = window.AndroidStore.exportFile(name, JSON.stringify(S, null, 2)); alert(r ? 'Копия сохранена в «Загрузки»: ' + r : 'Не удалось сохранить копию.'); return; }
+    const blob = new Blob([JSON.stringify(S, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+    a.download = 'kredit-tracker-' + new Date().toISOString().slice(0, 10) + '.json'; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000); return;
+  }
+  if (t.id === 'btnOpenDir') { window.trackerStore.openFolder(); return; }
+  if (t.id === 'btnChooseDir') {
+    window.trackerStore.chooseFolder().then(r => {
+      if (!r) return;
+      let s2 = null; try { s2 = r.text ? JSON.parse(r.text) : null; } catch (e) { alert('В выбранной папке файл данных не читается.'); return; }
+      appInfo = { file: r.file, dir: r.dir }; if (s2) S = merge(clone(DEFAULTS), s2); loadFailed = false; save(); render();
+    });
+    return;
+  }
+});
+document.addEventListener('change', (e) => {
+  const t = e.target;
+  if (t.id === 'selMonth') { ui.month = Number(t.value); render(); return; }
+  if (t.id === 'extraAmt') { updateExtra(); return; }
+  if (t.id === 'sliceDate') { if (t.value) { S.settings.slice = t.value; save(); render(); } return; }
+  if (t.id === 'fileImport') {
+    const f = t.files[0]; if (!f) return; const r = new FileReader();
+    r.onload = () => { try { const j = JSON.parse(r.result); if (!j.loans || !j.settings) throw 0; S = merge(clone(DEFAULTS), j); save(); render(); } catch (err) { alert('Не удалось прочитать файл: это не копия трекера.'); } };
+    r.readAsText(f); return;
+  }
+  if (t.dataset.l) {
+    const L = S.loans[t.dataset.l], f = t.dataset.f;
+    if (f === 'name') L.name = t.value.trim() || L.name;
+    else if (f === 'comp') L.comp = t.value === '1';
+    else if (f === 'start') L.start = t.value || '';
+    else { const n = parseNum(t.value); if (n !== null && n >= 0) L[f] = n; }
+    save(); render(); return;
+  }
+  if (t.dataset.ord !== undefined) {
+    const i = Number(t.dataset.ord), v = t.value, o = prepayOrder(S).filter(k => !S.loans[k].comp), j = o.indexOf(v);
+    if (j >= 0) o[j] = o[i]; o[i] = v; S.settings.order = o.concat(prepayOrder(S).filter(k => S.loans[k].comp)); syncIds(S); save(); render(); return;
+  }
+  if (t.dataset.s) {
+    const f = t.dataset.s;
+    if (f === 'compOn') S.settings.compOn = t.value === '1';
+    else if (f === 'compEnd') { if (t.value) S.settings.compEnd = t.value; }
+    else if (f === 'bonusMonth') S.settings.bonusMonth = Number(t.value);
+    else if (f === 'goal') S.settings.goal = t.value === 'save' ? 'save' : 'free';
+    else if (f === 'startMonth') { if (/^\d{4}-\d{2}$/.test(t.value)) S.settings.startMonth = t.value; }
+    else if (f === 'orderMode') { if (t.value === 'manual') S.settings.order = baseOrder(S); S.settings.orderMode = t.value; }
+    else if (f === 'payDay') { const n = Math.round(parseNum(t.value)); if (n >= 1 && n <= 31) S.settings.payDay = n; }
+    else { const n = parseNum(t.value); if (n !== null && n >= 0) S.settings[f] = n; }
+    syncIds(S); save(); render();
+  }
+});
+
+load().then(() => {
+  if (loadFailed) { badge('warn', 'файл данных не прочитан — запись отключена'); alert('Не удалось прочитать файл данных трекера. Запись отключена, чтобы не затереть его. Копии по дням лежат в подпапке backups рядом с файлом данных.'); }
+  else if (window.trackerStore) badge('ok', appInfo && appInfo.telegram ? 'данные в облаке Telegram' : 'данные в файле');
+  else save();
+  render();
+});
+</script>
+</body>
+</html>

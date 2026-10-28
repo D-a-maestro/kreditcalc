@@ -1,0 +1,1173 @@
+<title>Калькулятор досрочного погашения</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: editorial header, then input cards (loan, prepayment, saved) beside the results column;
+   phones get one column and a floating summary pill. Palette after the user's "кредитный план" sample:
+   sage paper, deep forest summary card, lime only for the money you keep. */
+:root {
+  --bg: #F4F5F0;
+  --surface: #FFFFFF;
+  --field: #F7F9F4;
+  --ink: #182B29;
+  --muted: #73807A;
+  --line: #E4E9E1;
+  --line-strong: #CDD6C8;
+  --brand: #2F5E3F;
+  --brand-ink: #FFFFFF;
+  --brand-soft: #EDF4E4;
+  --pos: #3E7A35;
+  --pos-soft: #EEF6E2;
+  --pos-line: #A6C38F;
+  --neg: #A8664F;
+  --sky: #B7C6B2;
+  --c-old: #D2DACB;
+  --c-int: #C99A7E;
+  --c-new: #4E7D3A;
+  --c-area: rgba(110, 160, 80, 0.16);
+  --extra-bg: #FAFEF2;
+  --extra-line: #DCE7CE;
+  --warn: #8C6122;
+  --warn-bg: #FFF1D9;
+  --hero-bg: #1C302C;
+  --hero-ink: #FFFFFF;
+  --hero-muted: #A9BBA2;
+  --hero-line: rgba(173, 203, 155, 0.16);
+  --lime: #D4F77C;
+  --lime-ink: #233A1B;
+  --seg-bg: #EFF3EA;
+  --quick-line: #D6E2C8;
+  --quick-ink: #5E7550;
+  --ico-bg: #F2F5EE;
+  --ico-ink: #6B805C;
+  --ico-on-bg: #DAE9C8;
+  --ico-on-ink: #456333;
+  --soft-ink: #6B7D69;
+  --accent-text: #73876A;
+  --font: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0F1715; --surface: #16211E; --field: #121B19; --ink: #E4ECE5; --muted: #93A39A;
+    --line: #24322E; --line-strong: #34453F; --brand: #A9D39A; --brand-ink: #10201A; --brand-soft: rgba(169, 211, 154, 0.12);
+    --pos: #BFE38E; --pos-soft: rgba(212, 247, 124, 0.08); --pos-line: #5E7F4B; --neg: #D9A08A;
+    --sky: #5A7264; --c-old: #3B4B45; --c-int: #B98A70; --c-new: #BFE38E; --c-area: rgba(191, 227, 142, 0.12);
+    --extra-bg: #17241C; --extra-line: #2C3D2F; --warn: #E8C27A; --warn-bg: #33291A;
+    --hero-bg: #1C302C; --seg-bg: #1D2A26; --quick-line: #34453F; --quick-ink: #B5CCA5; --ico-bg: #1D2A26; --ico-ink: #A9C29A; --ico-on-bg: #2F4630; --ico-on-ink: #D4F77C; --soft-ink: #8FA28C; --accent-text: #9DB491; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0F1715; --surface: #16211E; --field: #121B19; --ink: #E4ECE5; --muted: #93A39A;
+  --line: #24322E; --line-strong: #34453F; --brand: #A9D39A; --brand-ink: #10201A; --brand-soft: rgba(169, 211, 154, 0.12);
+  --pos: #BFE38E; --pos-soft: rgba(212, 247, 124, 0.08); --pos-line: #5E7F4B; --neg: #D9A08A;
+  --sky: #5A7264; --c-old: #3B4B45; --c-int: #B98A70; --c-new: #BFE38E; --c-area: rgba(191, 227, 142, 0.12);
+  --extra-bg: #17241C; --extra-line: #2C3D2F; --warn: #E8C27A; --warn-bg: #33291A;
+  --hero-bg: #1C302C; --seg-bg: #1D2A26; --quick-line: #34453F; --quick-ink: #B5CCA5; --ico-bg: #1D2A26; --ico-ink: #A9C29A; --ico-on-bg: #2F4630; --ico-on-ink: #D4F77C; --soft-ink: #8FA28C; --accent-text: #9DB491; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink);
+  font-family: var(--font); font-size: 16px; line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  padding-block: 8px 48px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+@media (max-width: 899px) { body { padding-block: 4px calc(110px + env(safe-area-inset-bottom, 0px)); } }
+.wrap { max-width: 1180px; margin: 0 auto; }
+button { font: inherit; color: inherit; }
+
+/* Header */
+.top { height: 72px; display: flex; align-items: center; justify-content: space-between; gap: 12px; border-bottom: 1px solid var(--line); }
+.theme-btn { display: flex; align-items: center; gap: 8px; border: 1px solid var(--line-strong); background: transparent; color: var(--ink); border-radius: 999px; padding: 9px 14px; font-size: 15px; font-weight: 600; cursor: pointer; }
+.theme-btn:hover { background: var(--surface); }
+.theme-btn .i-sun { display: none; }
+.theme-btn[aria-pressed="true"] .i-sun { display: block; }
+.theme-btn[aria-pressed="true"] .i-moon { display: none; }
+.brand { display: flex; align-items: center; gap: 10px; font-size: 17px; font-weight: 700; letter-spacing: -0.02em; }
+.mark { width: 36px; height: 36px; border-radius: 11px; background: var(--hero-bg); color: var(--lime); display: grid; place-items: center; }
+.mark svg { display: block; }
+.hello { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px 32px; padding: 30px 0 26px; }
+.eyebrow { text-transform: uppercase; letter-spacing: .14em; font-size: 13px; font-weight: 700; color: var(--soft-ink); margin: 0 0 12px; }
+h1 { font-size: clamp(30px, 5.4vw, 50px); font-weight: 600; line-height: 1.06; letter-spacing: -0.04em; margin: 0; text-wrap: balance; }
+h1 span { color: var(--accent-text); }
+.hello-copy { max-width: 320px; margin: 0; color: var(--muted); font-size: 15.5px; line-height: 1.6; }
+.hello-copy b { display: block; color: var(--ink); font-weight: 550; margin-bottom: 2px; }
+
+.grid { display: grid; gap: 20px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 900px) { .grid { grid-template-columns: 360px minmax(0, 1fr); align-items: start; } }
+.form { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+
+/* Cards */
+.card, .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 24px; padding: 22px; min-width: 0; }
+.card.extra { background: var(--extra-bg); border-color: var(--extra-line); }
+.card-h { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 18px; }
+.card-h h2 { margin: 0; font-size: 18px; font-weight: 650; letter-spacing: -0.03em; }
+.step { font-size: 13px; border: 1px solid var(--line-strong); border-radius: 7px; padding: 3px 7px; color: var(--muted); font-variant-numeric: tabular-nums; }
+h2.sec { font-size: 17px; font-weight: 650; letter-spacing: -0.03em; color: var(--ink); margin: 0 0 14px; }
+
+/* Fields */
+.field { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; min-width: 0; }
+.field:last-child { margin-bottom: 0; }
+.field > label, .lbl { font-size: 14px; color: var(--muted); font-weight: 500; }
+.inp { position: relative; min-width: 0; }
+input[type=text], input[type=number], select {
+  width: 100%; height: 46px; border: 1px solid var(--line); background: var(--field); color: var(--ink);
+  border-radius: 12px; padding: 0 12px; font: inherit; font-size: 17px; font-weight: 500; font-variant-numeric: tabular-nums; min-width: 0;
+  transition: border-color .15s, box-shadow .15s;
+}
+input:focus, select:focus { outline: none; border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-soft); }
+input:disabled { opacity: .5; cursor: not-allowed; }
+input::placeholder { color: var(--muted); font-weight: 400; opacity: .8; }
+.inp input { padding-right: 70px; }
+/* Big numbers sit on a single underline, like a ledger line. */
+.inp.big input, .inp.mid input { height: auto; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; background: transparent; padding: 2px 44px 10px 0; box-shadow: none; }
+.inp.big input { font-size: 30px; font-weight: 600; letter-spacing: -0.03em; }
+.inp.mid input { font-size: 23px; font-weight: 600; letter-spacing: -0.02em; padding-right: 36px; }
+.inp.big input:focus, .inp.mid input:focus { border-bottom-color: var(--brand); box-shadow: none; }
+.inp.big .unit, .inp.mid .unit { top: auto; bottom: 12px; transform: none; font-size: 16px; color: var(--muted); }
+.inp.mid .unit { font-size: 15px; }
+input[type=number] { -moz-appearance: textfield; appearance: textfield; }
+input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+.unit { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 15.5px; pointer-events: none; }
+button:focus-visible, summary:focus-visible { outline: 3px solid #88B85B; outline-offset: 3px; }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; min-width: 0; }
+.row2.tight { gap: 10px; }
+.row3 { display: grid; grid-template-columns: 0.8fr 1.7fr 1.1fr; gap: 8px; min-width: 0; }
+.row3 select { padding: 0 8px; }
+.hint { font-size: 14px; color: var(--muted); margin: 0; line-height: 1.55; }
+
+/* Range sliders */
+.range { --fill: 25%; -webkit-appearance: none; appearance: none; width: 100%; height: 3px; margin: 6px 0 0; border-radius: 3px; cursor: pointer; touch-action: pan-y;
+  background: linear-gradient(to right, var(--c-new) var(--fill), var(--line) var(--fill)); }
+.range::-webkit-slider-thumb { -webkit-appearance: none; width: 15px; height: 15px; border-radius: 50%; background: var(--ink); border: 3px solid var(--surface); box-shadow: 0 0 0 1px var(--c-new); }
+.range::-moz-range-thumb { width: 10px; height: 10px; border-radius: 50%; background: var(--ink); border: 3px solid var(--surface); box-shadow: 0 0 0 1px var(--c-new); }
+.range:focus-visible { outline: 2px solid #88B85B; outline-offset: 6px; }
+.range-ends { display: flex; justify-content: space-between; font-size: 13px; color: var(--muted); }
+
+/* Segmented controls */
+.seg { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 3px; background: var(--seg-bg); border-radius: 11px; padding: 4px; }
+.seg.stack { grid-auto-flow: row; }
+.seg button { border: 0; background: transparent; color: var(--muted); font-size: 15px; font-weight: 550; min-height: 38px; border-radius: 8px; padding: 6px 10px; cursor: pointer; line-height: 1.2; }
+.seg.stack button { text-align: left; padding: 8px 12px; }
+.seg button:hover { color: var(--ink); }
+.seg button[aria-pressed="true"] { background: var(--surface); color: var(--ink); font-weight: 650; box-shadow: 0 2px 6px rgba(40, 65, 30, .08); }
+#freq { margin-bottom: 18px; }
+.kinds { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 3px; background: var(--seg-bg); border-radius: 11px; padding: 4px; margin-bottom: 22px; }
+.kinds button { border: 0; background: transparent; color: var(--muted); font-size: 14px; font-weight: 600; border-radius: 8px; padding: 9px 2px; cursor: pointer; }
+.kinds button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 2px 6px rgba(40, 65, 30, .08); }
+.kinds button:hover { color: var(--ink); }
+
+/* Quick add */
+.quick { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.quick button { border: 1px solid var(--quick-line); background: transparent; color: var(--quick-ink); border-radius: 7px; padding: 6px 9px; font-size: 14px; font-weight: 550; cursor: pointer; font-variant-numeric: tabular-nums; }
+.quick button:hover { background: var(--brand-soft); }
+.quick button[data-add="0"] { color: var(--muted); border-color: transparent; }
+
+/* Advanced */
+.more { border-top: 1px solid var(--line); margin-top: 4px; }
+.more summary { display: flex; justify-content: space-between; align-items: center; cursor: pointer; list-style: none; padding-top: 16px; font-size: 15px; color: var(--quick-ink); font-weight: 550; }
+.more summary::-webkit-details-marker { display: none; }
+.more summary::after { content: '+'; font-size: 18px; line-height: 1; }
+.more[open] summary::after { content: '−'; }
+.more-in { padding-top: 16px; }
+
+/* Profiles */
+.plist { display: grid; gap: 6px; margin-bottom: 10px; }
+.plist:empty { display: none; }
+.prow { display: flex; gap: 8px; margin-bottom: 8px; }
+.prow input { flex: 1; min-width: 0; }
+.btn { flex: none; height: 46px; border: 0; border-radius: 12px; background: var(--hero-bg); color: #E7F2DF; font-weight: 600; font-size: 15.5px; padding: 0 16px; cursor: pointer; }
+.btn:hover { filter: brightness(1.15); }
+.pitem { display: flex; gap: 6px; align-items: stretch; min-width: 0; }
+.pitem .load { flex: 1; min-width: 0; text-align: left; border: 1px solid var(--line); background: var(--field); color: var(--ink); border-radius: 12px; padding: 9px 12px; font-size: 15.5px; font-weight: 600; cursor: pointer; overflow-wrap: anywhere; }
+.pitem .load:hover { border-color: var(--line-strong); }
+.pitem .load[aria-pressed="true"] { border-color: var(--c-new); background: var(--pos-soft); }
+.pitem .load small { display: block; color: var(--muted); font-size: 14px; font-weight: 400; font-variant-numeric: tabular-nums; }
+.pitem .del { border: 1px solid var(--line); background: transparent; color: var(--muted); border-radius: 12px; padding: 0 12px; font-size: 15px; cursor: pointer; white-space: nowrap; }
+.pitem .del:hover { color: var(--neg); border-color: var(--neg); }
+
+/* Results */
+.results { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+.warn { background: var(--warn-bg); color: var(--warn); border-radius: 14px; padding: 12px 16px; font-size: 15.5px; }
+.good { color: var(--pos); }
+
+/* Summary card */
+.lead { background: var(--hero-bg); color: var(--hero-ink); border-radius: 24px; padding: 28px 28px 24px; scroll-margin-top: 16px; display: grid; gap: 22px; position: relative; overflow: hidden; }
+.lead::before, .lead::after { content: ""; position: absolute; border-radius: 50%; border: 1px solid rgba(173, 203, 155, .08); pointer-events: none; }
+.lead::before { width: 360px; height: 360px; top: -190px; right: -80px; }
+.lead::after { width: 480px; height: 480px; top: -250px; right: -140px; }
+.lead > * { position: relative; z-index: 1; }
+.lead-top { display: flex; justify-content: space-between; align-items: center; gap: 16px 24px; }
+.lead-label { display: flex; align-items: center; gap: 8px; font-size: 15px; color: var(--hero-muted); margin: 0 0 10px; }
+.lead-label::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--lime); box-shadow: 0 0 0 4px rgba(212, 247, 124, .1); }
+.lead-num { font-weight: 500; font-size: clamp(34px, 7vw, 60px); line-height: 1.05; letter-spacing: -0.045em; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.lead-num .cur { color: #A2B797; font-size: .6em; margin-left: 4px; letter-spacing: 0; }
+.lead-note { margin: 12px 0 0; font-size: 15.5px; line-height: 1.6; color: var(--hero-muted); max-width: 420px; }
+.lead-note b { color: var(--lime); font-weight: 550; }
+.ring { position: relative; flex: none; width: 140px; height: 140px; }
+.ring svg { width: 100%; height: 100%; transform: rotate(-90deg); display: block; }
+.ring-track { fill: none; stroke: rgba(255, 255, 255, .07); stroke-width: 9; }
+.ring-prog { fill: none; stroke: var(--lime); stroke-width: 9; stroke-linecap: round; transition: stroke-dashoffset .45s; }
+.ring-lbl { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; text-align: center; }
+.ring-lbl b { font-size: 28px; font-weight: 500; letter-spacing: -0.04em; color: var(--lime); }
+.ring-lbl span { font-size: 12px; line-height: 1.35; color: var(--hero-muted); }
+@media (max-width: 560px) {
+  .lead { padding: 22px 18px 20px; border-radius: 22px; }
+  .ring { width: 96px; height: 96px; }
+  .ring-lbl b { font-size: 21px; }
+  .ring-lbl span { font-size: 10.5px; }
+}
+
+.ba { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 10px; }
+.ba-h { padding: 12px 14px 8px; border-radius: 16px 16px 0 0; font-size: 15px; font-weight: 650; display: flex; flex-direction: column; gap: 1px; }
+.ba-h span { font-size: 14px; font-weight: 400; color: var(--hero-muted); }
+.ba-h.old { color: var(--hero-muted); }
+.ba-cell { display: grid; align-content: start; padding: 9px 14px; min-width: 0; border-top: 1px solid var(--hero-line); }
+.ba-cell.last { border-radius: 0 0 16px 16px; padding-bottom: 14px; }
+.ba .old { background: rgba(255, 255, 255, .03); }
+.ba .new { background: rgba(212, 247, 124, .06); box-shadow: inset 1px 0 0 rgba(212, 247, 124, .35), inset -1px 0 0 rgba(212, 247, 124, .35); }
+.ba-h.new { box-shadow: inset 1px 0 0 rgba(212, 247, 124, .35), inset -1px 0 0 rgba(212, 247, 124, .35), inset 0 1px 0 rgba(212, 247, 124, .35); }
+.ba-cell.new.last { box-shadow: inset 1px 0 0 rgba(212, 247, 124, .35), inset -1px 0 0 rgba(212, 247, 124, .35), inset 0 -1px 0 rgba(212, 247, 124, .35); }
+.ba-k { font-size: 14px; color: var(--hero-muted); }
+.ba-v { font-size: 18px; font-weight: 550; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; line-height: 1.3; }
+.ba .old .ba-v { color: #C9D5C4; font-weight: 450; }
+.ba-s { font-size: 14px; color: var(--hero-muted); font-variant-numeric: tabular-nums; }
+.ba-d { justify-self: start; margin-top: 4px; font-size: 14px; font-weight: 600; color: var(--lime); font-variant-numeric: tabular-nums; }
+@media (max-width: 560px) {
+  .ba { column-gap: 6px; }
+  .ba-h, .ba-cell { padding-left: 10px; padding-right: 10px; }
+  .ba-v { font-size: 16.5px; }
+}
+.tl { display: grid; gap: 10px; padding-top: 18px; border-top: 1px solid var(--hero-line); }
+.tl-row { display: grid; grid-template-columns: 128px minmax(0, 1fr) auto; gap: 12px; align-items: center; font-size: 15px; }
+.tl-name { color: var(--hero-muted); }
+.tl-track { height: 6px; background: rgba(255, 255, 255, .07); border-radius: 4px; overflow: hidden; }
+.tl-fill { height: 100%; border-radius: 4px; background: rgba(201, 213, 196, .45); }
+.tl-fill.new { background: var(--lime); }
+.tl-end { font-weight: 550; font-variant-numeric: tabular-nums; white-space: nowrap; }
+@media (max-width: 560px) {
+  .tl-row { grid-template-columns: 1fr auto; grid-template-areas: "n e" "t t"; gap: 5px 10px; }
+  .tl-name { grid-area: n; } .tl-end { grid-area: e; } .tl-track { grid-area: t; }
+}
+
+/* Totals */
+.tot { display: grid; gap: 16px; }
+.tot-row { display: grid; gap: 8px; }
+.tot-h { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2px 12px; font-size: 15px; color: var(--muted); }
+.tot-h b { color: var(--ink); font-size: 18px; font-weight: 600; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.tot-bar { display: flex; height: 12px; border-radius: 6px; overflow: hidden; background: var(--field); gap: 2px; }
+.sg { display: block; height: 100%; flex: none; }
+.sg.debt, .lg.debt { background: var(--sky); }
+.sg.int-base, .sg.int, .lg.int { background: var(--c-int); }
+.sg.int-base { opacity: .55; }
+.sg.save, .lg.save { background: repeating-linear-gradient(135deg, var(--c-new) 0 3px, transparent 3px 7px); box-shadow: inset 0 0 0 1px var(--c-new); border-radius: 0 6px 6px 0; }
+.legend i.lg, .lg { display: inline-block; width: 12px; height: 8px; border-radius: 2px; vertical-align: 0; margin-right: 6px; }
+.tot .legend { margin: 0; }
+.save-strip { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 4px 12px; margin-top: 16px; padding: 14px 18px; border-radius: 16px; background: var(--pos-soft); border: 1px solid var(--pos-line); }
+.save-strip span { font-weight: 550; }
+.save-strip b { font-size: 22px; font-weight: 600; letter-spacing: -0.03em; color: var(--pos); font-variant-numeric: tabular-nums; }
+
+.tblwrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+.cmp th, .cmp td { padding: 13px 8px; text-align: right; border-bottom: 1px solid var(--line); font-size: 15.5px; white-space: nowrap; }
+.cmp th:first-child, .cmp td:first-child { text-align: left; white-space: normal; padding-left: 0; color: var(--muted); }
+.cmp th:last-child, .cmp td:last-child { padding-right: 0; }
+.cmp thead th { font-size: 14px; font-weight: 500; color: var(--muted); padding-top: 0; }
+.cmp tbody tr:last-child td { border-bottom: 0; }
+.cmp td.d { font-weight: 600; }
+@media (max-width: 560px) {
+  .cmp thead { display: none; }
+  .cmp tr { display: grid; grid-template-columns: minmax(0, 1fr); gap: 3px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+  .cmp tbody tr:last-child { border-bottom: 0; }
+  .cmp td, .cmp th { border: 0; padding: 0; text-align: right; white-space: nowrap; }
+  .cmp td:first-child { color: var(--ink); font-weight: 600; margin-bottom: 2px; text-align: left; white-space: normal; }
+  .cmp td:not(:first-child) { display: flex; justify-content: space-between; gap: 12px; }
+  .cmp td:not(:first-child)::before { content: attr(data-h); color: var(--muted); font-weight: 400; }
+  .cmp td:empty { display: none; }
+}
+.note { font-size: 15px; color: var(--muted); margin: 14px 0 0; line-height: 1.6; }
+.verdict { font-size: 17px; font-weight: 600; line-height: 1.35; margin: 0 0 6px; text-wrap: balance; letter-spacing: -0.02em; }
+.verdict-sub { margin: 0 0 16px; color: var(--muted); font-size: 15.5px; }
+
+/* Strategy cards */
+.strats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
+.strategy { position: relative; text-align: left; min-width: 0; border: 1px solid var(--line); background: var(--surface); border-radius: 18px; padding: 16px; cursor: pointer; display: grid; gap: 10px; align-content: start; transition: border-color .18s, transform .18s, background-color .18s; }
+.strategy:hover { transform: translateY(-2px); border-color: var(--line-strong); }
+.strategy[aria-pressed="true"] { background: var(--pos-soft); border-color: var(--c-new); box-shadow: inset 0 0 0 1px var(--c-new); }
+.st-top { display: flex; justify-content: space-between; align-items: center; }
+.st-ico { width: 28px; height: 28px; border-radius: 8px; display: grid; place-items: center; background: var(--ico-bg); color: var(--ico-ink); }
+.strategy[aria-pressed="true"] .st-ico { background: var(--ico-on-bg); color: var(--ico-on-ink); }
+.radio { width: 16px; height: 16px; border-radius: 50%; border: 1px solid var(--line-strong); }
+.strategy[aria-pressed="true"] .radio { border: 5px solid var(--c-new); background: var(--surface); }
+.st-title { font-weight: 650; font-size: 16px; letter-spacing: -0.01em; }
+.st-desc { font-size: 14px; color: var(--muted); line-height: 1.5; }
+.st-title, .st-desc, .st-save { display: block; }
+.st-save { font-size: 19px; font-weight: 600; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
+.st-save small { display: block; font-size: 13px; font-weight: 400; color: var(--muted); letter-spacing: 0; }
+.st-meta { display: grid; gap: 2px; font-size: 14px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 10px; font-variant-numeric: tabular-nums; }
+.st-meta b { color: var(--ink); font-weight: 600; }
+.badge { position: absolute; top: -9px; left: 14px; font-size: 12px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; background: var(--hero-bg); color: var(--lime); border-radius: 6px; padding: 3px 8px; }
+
+/* Chart */
+.legend { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 14px; color: var(--muted); margin-bottom: 8px; }
+.legend i { display: inline-block; width: 16px; height: 3px; border-radius: 2px; vertical-align: middle; margin-right: 6px; }
+#chart svg { display: block; width: 100%; touch-action: pan-y; }
+.ax { fill: var(--muted); font-size: 13px; font-family: var(--font); font-variant-numeric: tabular-nums; }
+.readout { font-size: 15px; min-height: 42px; margin-top: 8px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.readout b { color: var(--ink); font-weight: 600; }
+
+/* Schedule */
+.sched-h { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px 16px; margin-bottom: 14px; }
+.sched-h .sec { margin: 0; }
+.sched-h .seg { min-width: 0; }
+.years { position: relative; display: flex; gap: 8px; overflow-x: auto; padding: 2px 2px 6px; margin-bottom: 6px; scrollbar-width: thin; }
+.years button { flex: none; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font-size: 15.5px; font-weight: 550; border-radius: 999px; padding: 7px 17px; cursor: pointer; font-variant-numeric: tabular-nums; }
+.years button:hover { border-color: var(--line-strong); }
+.years button[aria-pressed="true"] { background: var(--hero-bg); color: #E7F2DF; border-color: var(--hero-bg); }
+.plist2 { display: grid; }
+.prow2 { padding: 14px 0; border-bottom: 1px dashed var(--line-strong); display: grid; gap: 8px; }
+.prow2:last-child { border-bottom: 0; }
+.prow2.ex { background: var(--pos-soft); margin: 4px -10px; padding: 14px 10px; border-radius: 14px; border-bottom-color: transparent; }
+.pr-top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 2px 14px; }
+.pr-top b { font-size: 17px; font-weight: 600; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; }
+.pr-top span { color: var(--muted); font-size: 15px; font-variant-numeric: tabular-nums; }
+.pr-parts { display: flex; flex-wrap: wrap; gap: 4px 28px; font-size: 14px; color: var(--muted); }
+.pr-parts b { display: block; color: var(--ink); font-size: 15.5px; font-weight: 550; font-variant-numeric: tabular-nums; }
+.pr-parts .good b { color: var(--pos); }
+.fine { font-size: 14px; color: var(--muted); margin: 4px 0 0; max-width: 80ch; line-height: 1.6; }
+
+/* Floating summary pill on phones */
+.mbar {
+  position: fixed; z-index: 20; display: flex; align-items: center; gap: 14px;
+  left: max(12px, env(safe-area-inset-left, 0px)); right: max(12px, env(safe-area-inset-right, 0px)); bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  padding: 12px 14px 12px 18px; border-radius: 16px; background: rgba(28, 48, 44, .96); color: #D8E9CC;
+  box-shadow: 0 8px 28px rgba(17, 43, 38, .3); transition: transform .2s, opacity .2s;
+}
+.mbar.off { opacity: 0; transform: translateY(130%); pointer-events: none; }
+.mb-item { min-width: 0; }
+.mb-k { font-size: 13px; color: #A7BB9C; }
+.mb-v { font-size: 17px; font-weight: 550; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.mb-v.acc { color: var(--lime); }
+.mbar button { margin-left: auto; flex: none; border: 0; border-radius: 10px; height: 40px; padding: 0 14px; background: var(--lime); color: var(--lime-ink); font-weight: 650; font-size: 15px; cursor: pointer; }
+@media (min-width: 900px) { .mbar { display: none !important; } }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+@media (max-width: 560px) {
+  .lead-top { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 12px; align-items: center; }
+  .lead-top > div:first-child { display: contents; }
+  .lead-label, .lead-num { grid-column: 1 / -1; }
+  .lead-num { white-space: nowrap; font-size: clamp(30px, 9.4vw, 42px); }
+  .lead-note { grid-column: 1; font-size: 15px; }
+  .ring { grid-column: 2; width: 92px; height: 92px; margin-top: 10px; }
+  .ring-lbl b { font-size: 21px; }
+  .ring-lbl span { font-size: 10.5px; }
+  .ba-h, .ba-cell { padding-left: 10px; padding-right: 8px; }
+  .ba-k, .ba-s { font-size: 13px; }
+  .ba-v { font-size: 15px; white-space: nowrap; }
+  .ba-d { font-size: 13.5px; white-space: nowrap; }
+}
+.seg button, .kinds button { min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 400px) { .seg button, .kinds button { font-size: 13.5px; padding-left: 4px; padding-right: 4px; } }
+</style>
+
+<main class="wrap">
+  <header class="top">
+    <div class="brand">
+      <span class="mark" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M4 6h4v4h4v4h4v4h4" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+      <span>Досрочное погашение</span>
+    </div>
+    <button type="button" class="theme-btn" id="themeBtn" aria-pressed="false">
+      <svg class="i-moon" width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M13.5 9.6A5.6 5.6 0 0 1 6.4 2.5a5.6 5.6 0 1 0 7.1 7.1Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+      <svg class="i-sun" width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M8 1.5v1.6M8 12.9v1.6M1.5 8h1.6M12.9 8h1.6M3.4 3.4l1.1 1.1M11.5 11.5l1.1 1.1M3.4 12.6l1.1-1.1M11.5 4.5l1.1-1.1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      <span id="themeLbl">Тёмная тема</span>
+    </button>
+  </header>
+  <section class="hello">
+    <div>
+      <p class="eyebrow">Ипотека · автокредит · потребительский кредит</p>
+      <h1>Меньше процентов. <span>Больше свободы.</span></h1>
+    </div>
+    <p class="hello-copy"><b>У каждого взноса есть результат.</b> Меняйте параметры и смотрите, сколько денег и времени останется вам.</p>
+  </section>
+
+  <div class="grid">
+    <section class="form" aria-label="Параметры расчёта">
+      <div class="card">
+        <div class="card-h"><h2>Ваш кредит</h2><span class="step">01</span></div>
+        <div class="kinds" role="group" aria-label="Тип кредита">
+          <button type="button" data-kind="mortgage" aria-pressed="true">Ипотека</button>
+          <button type="button" data-kind="auto" aria-pressed="false">Автокредит</button>
+          <button type="button" data-kind="consumer" aria-pressed="false">Потребительский</button>
+        </div>
+        <div class="field">
+          <label for="amount">Сумма кредита</label>
+          <div class="inp big"><input id="amount" type="text" inputmode="decimal" autocomplete="off"><span class="unit">₽</span></div>
+          <input class="range" id="amountR" type="range" min="100000" max="30000000" step="10000" aria-label="Сумма кредита, ползунок">
+          <div class="range-ends"><span>100 тыс.</span><span>30 млн</span></div>
+        </div>
+        <div class="row2">
+          <div class="field">
+            <label for="rate">Ставка в год</label>
+            <div class="inp mid"><input id="rate" type="text" inputmode="decimal" autocomplete="off"><span class="unit">%</span></div>
+            <input class="range" id="rateR" type="range" min="1" max="40" step="0.1" aria-label="Ставка, ползунок">
+          </div>
+          <div class="field">
+            <span class="lbl" id="termLbl">Срок</span>
+            <div class="row2 tight" role="group" aria-labelledby="termLbl">
+              <div class="inp mid"><input id="years" type="number" inputmode="numeric" min="0" max="50" aria-label="Срок, лет"><span class="unit">лет</span></div>
+              <div class="inp mid"><input id="months" type="number" inputmode="numeric" min="0" max="11" aria-label="Срок, месяцев"><span class="unit">мес</span></div>
+            </div>
+            <input class="range" id="yearsR" type="range" min="1" max="30" step="1" aria-label="Срок в годах, ползунок">
+          </div>
+        </div>
+        <details class="more" open>
+          <summary>Платёж, даты и тип платежа</summary>
+          <div class="more-in">
+            <div class="field">
+              <label for="pay">Текущий платёж в месяц</label>
+              <div class="inp"><input id="pay" type="text" inputmode="decimal" autocomplete="off" placeholder="считать по сроку"><span class="unit">₽</span></div>
+              <p class="hint" id="payHint"></p>
+            </div>
+            <div class="field">
+              <span class="lbl" id="issueLbl">Дата выдачи</span>
+              <div class="row3" role="group" aria-labelledby="issueLbl">
+                <select id="issueD" aria-label="День выдачи"></select>
+                <select id="issueM" aria-label="Месяц выдачи"></select>
+                <select id="issueY" aria-label="Год выдачи"></select>
+              </div>
+              <p class="hint">Число выдачи совпадает с днём ежемесячного платежа.</p>
+            </div>
+            <div class="field">
+              <span class="lbl" id="ptLbl">Тип платежа</span>
+              <div class="seg" id="ptype" role="group" aria-labelledby="ptLbl">
+                <button type="button" data-v="annuity" aria-pressed="true">Аннуитетный</button>
+                <button type="button" data-v="diff" aria-pressed="false">Дифференцированный</button>
+              </div>
+            </div>
+          </div>
+        </details>
+      </div>
+
+      <div class="card extra">
+        <div class="card-h"><h2>Погасить раньше</h2><span class="step">02</span></div>
+        <div class="seg" id="freq" role="group" aria-label="Как вносить">
+          <button type="button" data-v="monthly" aria-pressed="true">Каждый месяц</button>
+          <button type="button" data-v="once" aria-pressed="false">Один раз</button>
+        </div>
+        <div class="field">
+          <label for="extra" id="extraLbl">Дополнительно к платежу</label>
+          <div class="inp big"><input id="extra" type="text" inputmode="decimal" autocomplete="off"><span class="unit">₽</span></div>
+          <input class="range" id="extraR" type="range" min="0" max="200000" step="1000" aria-label="Досрочный взнос, ползунок">
+          <div class="quick" role="group" aria-label="Быстро добавить">
+            <button type="button" data-add="5000">+ 5 000</button>
+            <button type="button" data-add="10000">+ 10 000</button>
+            <button type="button" data-add="25000">+ 25 000</button>
+            <button type="button" data-add="0">Сбросить</button>
+          </div>
+        </div>
+        <div class="field">
+          <span class="lbl" id="exLbl">Начать вносить с</span>
+          <div class="row3" role="group" aria-labelledby="exLbl">
+            <select id="extraD" aria-label="День досрочного платежа"></select>
+            <select id="extraM" aria-label="Месяц досрочного платежа"></select>
+            <select id="extraY" aria-label="Год досрочного платежа"></select>
+          </div>
+          <p class="hint">Взнос учитывается после планового платежа. Если число позже дня платежа, взнос пойдёт в следующий месяц.</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-h"><h2>Мои расчёты</h2><span class="step">03</span></div>
+        <div class="plist" id="plist"></div>
+        <div class="prow">
+          <input id="pname" type="text" maxlength="60" autocomplete="off" placeholder="Например, «Машина»" aria-label="Название профиля">
+          <button type="button" class="btn" id="psave">Сохранить</button>
+        </div>
+        <p class="hint" id="pstatus"></p>
+      </div>
+    </section>
+
+    <section class="results" id="results" aria-live="polite"></section>
+  </div>
+</main>
+
+<div class="mbar off" id="mbar" aria-hidden="true">
+  <div class="mb-item"><div class="mb-k">Экономия</div><div class="mb-v acc" id="mbSave">—</div></div>
+  <div class="mb-item"><div class="mb-k" id="mbK2">Срок</div><div class="mb-v" id="mbTerm">—</div></div>
+  <button type="button" id="mbGo" tabindex="-1">Итоги</button>
+</div>
+
+<script>
+//#calc-start
+const MONTHS = ['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
+const MONTHS_FULL = ['январь','февраль','март','апрель','май','июнь','июль','август','сентябрь','октябрь','ноябрь','декабрь'];
+const MONTHS_GEN = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+
+function annuity(S, r, n) {
+  if (n <= 0) return 0;
+  return r === 0 ? S / n : S * r / (1 - Math.pow(1 + r, -n));
+}
+
+// Проценты считаются как в банке: остаток × ставка × дни периода / дней в году (365 или 366),
+// по фактическим датам платежей, с округлением до копеек. Период, который переходит через Новый год,
+// делится по годам. Дата платежа: число выдачи каждого месяца (или последний день короткого месяца).
+// extra = {amount, mode: 'once'|'monthly', start}; start = номер платежа, с которого вносится досрочно.
+// strategy: 'term'    - платёж прежний, срок короче;
+//           'payment' - после каждого довнесения платёж пересчитывается на оставшийся срок;
+//           'roll'    - то же, но разницу между старым и новым платежом добавляют к следующему довнесению.
+const r2 = (v) => Math.round((v + (v >= 0 ? 1 : -1) * 1e-9) * 100) / 100;
+const DAY = 86400000;
+function payDate(iss, k) {
+  const t = iss.y * 12 + iss.m + k, y = Math.floor(t / 12), m = t % 12;
+  const last = new Date(Date.UTC(y, m + 1, 0)).getUTCDate();
+  return Date.UTC(y, m, Math.min(iss.d, last));
+}
+function yearFraction(a, b) {
+  let f = 0, cur = a;
+  while (cur < b) {
+    const y = new Date(cur).getUTCFullYear();
+    const seg = Math.min(b, Date.UTC(y + 1, 0, 1));
+    const diy = ((y % 4 === 0 && y % 100 !== 0) || y % 400 === 0) ? 366 : 365;
+    f += Math.round((seg - cur) / DAY) / diy;
+    cur = seg;
+  }
+  return f;
+}
+function simulate(p, extra, strategy) {
+  const rm = p.rate / 1200, n = p.n;
+  const interestFor = (bal, m) => p.issue
+    ? r2(bal * p.rate / 100 * yearFraction(payDate(p.issue, m - 1), payDate(p.issue, m)))
+    : r2(bal * rm);
+  let bal = r2(p.amount), pay = r2(p.pay || annuity(bal, rm, n)), part = r2(bal / n), rolled = 0;
+  const rows = [];
+  for (let m = 1; m <= 1200 && bal > 0.004; m++) {
+    const interest = interestFor(bal, m);
+    let principal, pm;
+    if (p.ptype === 'annuity') { pm = Math.min(pay, r2(bal + interest)); principal = r2(pm - interest); }
+    else { principal = Math.min(part, bal); pm = r2(principal + interest); }
+    if (principal < 0) principal = 0;
+    if ((!p.pay && m >= n) || principal > bal) { principal = bal; pm = r2(principal + interest); }
+    bal = r2(bal - principal);
+    let ex = 0;
+    if (extra && m >= extra.start) {
+      const planned = (extra.mode === 'monthly' || m === extra.start) ? extra.amount : 0;
+      const want = r2(planned + (strategy === 'roll' ? rolled : 0));
+      if (want > 0) { ex = Math.min(want, bal); bal = r2(bal - ex); }
+    }
+    rows.push({ m, date: p.issue ? payDate(p.issue, m) : null, pay: pm, interest, principal, extra: ex, balance: bal });
+    if (ex > 0 && (strategy === 'payment' || strategy === 'roll') && bal > 0) {
+      const left = n - m;
+      if (left > 0) {
+        const np = r2(annuity(bal, rm, left)), nq = r2(bal / left);
+        rolled = r2(rolled + (p.ptype === 'annuity' ? pay - np : part - nq));
+        pay = np; part = nq;
+      }
+    }
+  }
+  return rows;
+}
+
+function summarize(rows, start) {
+  let interestFrom = 0, paidFrom = 0;
+  for (const r of rows) {
+    if (r.m >= start) { interestFrom += r.interest; paidFrom += r.pay + r.extra; }
+  }
+  const next = rows[start];
+  return { n: rows.length, interestFrom, paidFrom, payNext: next ? next.pay : 0, outNext: next ? next.pay + next.extra : 0, left: Math.max(0, rows.length - start) };
+}
+
+//#calc-end
+
+const $ = (s) => document.querySelector(s);
+// Тема: по умолчанию светлая, выбор запоминается на этом устройстве.
+const THEME_KEY = 'prepay-calc-theme';
+function applyTheme(t) {
+  document.documentElement.setAttribute('data-theme', t);
+  $('#themeBtn').setAttribute('aria-pressed', String(t === 'dark'));
+  $('#themeLbl').textContent = t === 'dark' ? 'Светлая тема' : 'Тёмная тема';
+}
+let theme = 'light';
+try { theme = localStorage.getItem(THEME_KEY) === 'dark' ? 'dark' : 'light'; } catch (e) {}
+applyTheme(theme);
+$('#themeBtn').addEventListener('click', () => {
+  theme = theme === 'dark' ? 'light' : 'dark';
+  applyTheme(theme);
+  try { localStorage.setItem(THEME_KEY, theme); } catch (e) {}
+});
+const fmt = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 0 });
+const NB = ' ';
+const fmt2 = new Intl.NumberFormat('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const fmtIn = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 2 });
+const round2 = (v) => Math.round((v + Number.EPSILON) * 100) / 100;
+const num2 = (v) => fmt2.format(round2(v));
+const money = (v) => num2(v) + NB + '₽';
+const signed = (v) => Math.abs(v) < 0.005 ? '—' : (v < 0 ? '−' : '+') + money(Math.abs(v));
+function plural(n, f) { const a = Math.abs(n) % 100, b = a % 10; if (a > 10 && a < 20) return f[2]; if (b > 1 && b < 5) return f[1]; if (b === 1) return f[0]; return f[2]; }
+function termText(m) {
+  const y = Math.floor(m / 12), mo = m % 12, parts = [];
+  if (y) parts.push(y + NB + plural(y, ['год', 'года', 'лет']));
+  if (mo || !y) parts.push(mo + NB + 'мес.');
+  return parts.join(' ');
+}
+function shortMoney(v) {
+  if (v >= 1e6) return (Math.round(v / 1e5) / 10).toString().replace('.', ',') + ' млн';
+  if (v >= 1e3) return Math.round(v / 1e3) + ' тыс';
+  return Math.round(v).toString();
+}
+
+const now = new Date();
+const nowIdx = now.getFullYear() * 12 + now.getMonth();
+const idxY = (i) => Math.floor(i / 12), idxM = (i) => i % 12;
+const PRESETS = {
+  mortgage: { amount: 6000000, rate: 12, years: 20, months: 0, once: 1000000, monthly: 10000, back: 24 },
+  auto:     { amount: 2500000, rate: 17, years: 5,  months: 0, once: 300000,  monthly: 10000, back: 12 },
+  consumer: { amount: 1000000, rate: 20, years: 5,  months: 0, once: 150000,  monthly: 5000,  back: 8 }
+};
+const state = { kind: 'mortgage', ptype: 'annuity', freq: 'monthly', strategy: 'term', pay: 0 };
+function applyPreset(kind) {
+  const p = PRESETS[kind];
+  Object.assign(state, { kind, pay: 0, amount: p.amount, rate: p.rate, years: p.years, months: p.months, extra: p[state.freq],
+    issueY: idxY(nowIdx - p.back), issueM: idxM(nowIdx - p.back), issueD: 15,
+    extraY: idxY(nowIdx + 1), extraM: idxM(nowIdx + 1), extraD: 15 });
+}
+applyPreset('mortgage');
+
+const STRAT_NAME = { term: 'сократить срок', payment: 'снизить платёж', roll: 'снизить платёж и довносить разницу' };
+
+function fillSelects() {
+  for (const id of ['issueM', 'extraM']) $('#' + id).innerHTML = MONTHS_FULL.map((m, i) => `<option value="${i}">${m}</option>`).join('');
+  const ds = Array.from({ length: 31 }, (_, i) => `<option value="${i + 1}">${i + 1}</option>`).join('');
+  for (const id of ['issueD', 'extraD']) $('#' + id).innerHTML = ds;
+  let ys = '';
+  for (let y = now.getFullYear() - 30; y <= now.getFullYear() + 30; y++) ys += `<option value="${y}">${y}</option>`;
+  for (const id of ['issueY', 'extraY']) $('#' + id).innerHTML = ys;
+}
+function syncInputs() {
+  $('#amount').value = state.amount ? fmtIn.format(state.amount) : '';
+  $('#extra').value = state.extra ? fmtIn.format(state.extra) : '';
+  $('#rate').value = String(state.rate).replace('.', ',');
+  $('#pay').value = state.pay ? fmtIn.format(round2(state.pay)) : '';
+  $('#pay').disabled = state.ptype === 'diff';
+  $('#years').value = state.years;
+  $('#months').value = state.months;
+  for (const k of ['issueD', 'issueM', 'issueY', 'extraD', 'extraM', 'extraY']) $('#' + k).value = state[k];
+  for (const k of ['ptype', 'freq', 'strategy'])
+    document.querySelectorAll('#' + k + ' button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === state[k])));
+  document.querySelectorAll('.kinds button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.kind === state.kind)));
+  const monthly = state.freq === 'monthly';
+  $('#exLbl').textContent = monthly ? 'Начать вносить с' : 'Дата платежа';
+  $('#extraLbl').textContent = monthly ? 'Дополнительно к платежу каждый месяц' : 'Разовый досрочный взнос';
+}
+
+let queued = false;
+function schedule() { if (queued) return; queued = true; requestAnimationFrame(() => { queued = false; render(); }); }
+
+function bindMoney(id, key) {
+  const el = $('#' + id);
+  el.addEventListener('input', () => {
+    const raw = el.value;
+    const pos = el.selectionStart ?? raw.length;
+    const atEnd = pos >= raw.length;
+    const before = raw.slice(0, pos).replace(/\D/g, '').length;
+    const sep = raw.search(/[.,]/);
+    const intDigits = (sep < 0 ? raw : raw.slice(0, sep)).replace(/\D/g, '').replace(/^0+(?=\d)/, '').slice(0, 11);
+    const frac = sep < 0 ? '' : raw.slice(sep + 1).replace(/\D/g, '').slice(0, 2);
+    state[key] = Number((intDigits || '0') + '.' + (frac || '0')) || 0;
+    el.value = (intDigits || sep >= 0) ? fmt.format(Number(intDigits || '0')) + (sep >= 0 ? ',' + frac : '') : '';
+    let i = el.value.length;
+    if (!atEnd) {
+      let cnt = 0; i = 0;
+      for (; i < el.value.length && cnt < before; i++) if (/\d/.test(el.value[i])) cnt++;
+    }
+    try { el.setSelectionRange(i, i); } catch (e) {}
+    schedule();
+  });
+}
+function bindNumber(id, key, min, max, parse) {
+  $('#' + id).addEventListener('input', (e) => {
+    let v = parse ? parse(e.target.value) : Number(e.target.value);
+    if (!isFinite(v)) v = 0;
+    state[key] = Math.min(max, Math.max(min, v));
+    schedule();
+  });
+}
+function bindSelect(id, key) { $('#' + id).addEventListener('change', (e) => { state[key] = Number(e.target.value); schedule(); }); }
+function bindSeg(id) {
+  document.querySelectorAll('#' + id + ' button').forEach(b => b.addEventListener('click', () => {
+    if (id === 'freq' && state.freq !== b.dataset.v) {
+      const pr = PRESETS[state.kind];
+      if (state.extra === pr[state.freq]) state.extra = pr[b.dataset.v];
+    }
+    state[id] = b.dataset.v; syncInputs(); schedule();
+  }));
+}
+
+fillSelects();
+syncInputs();
+bindMoney('amount', 'amount');
+bindMoney('extra', 'extra');
+bindMoney('pay', 'pay');
+['years', 'months'].forEach(id => $('#' + id).addEventListener('input', () => { state.pay = 0; $('#pay').value = ''; }));
+bindNumber('rate', 'rate', 0, 100, (s) => parseFloat(s.replace(',', '.')));
+bindNumber('years', 'years', 0, 50);
+bindNumber('months', 'months', 0, 11);
+['issueD', 'issueM', 'issueY', 'extraD', 'extraM', 'extraY'].forEach(k => bindSelect(k, k));
+['ptype', 'freq', 'strategy'].forEach(bindSeg);
+document.querySelectorAll('.kinds button').forEach(b => b.addEventListener('click', () => { applyPreset(b.dataset.kind); syncInputs(); schedule(); }));
+// Ползунки дублируют поля: двигаете ползунок, меняется число, и наоборот.
+const SLIDERS = [['amountR', 'amount'], ['rateR', 'rate'], ['yearsR', 'years'], ['extraR', 'extra']];
+function syncSliders() {
+  for (const [id, k] of SLIDERS) {
+    const el = $('#' + id), mn = Number(el.min), mx = Number(el.max);
+    if (document.activeElement !== el) el.value = Math.min(mx, Math.max(mn, Number(state[k]) || 0));
+    el.style.setProperty('--fill', ((Number(el.value) - mn) / (mx - mn) * 100).toFixed(1) + '%');
+  }
+}
+SLIDERS.forEach(([id, k]) => $('#' + id).addEventListener('input', (e) => {
+  state[k] = Number(e.target.value);
+  if (k === 'years') { state.months = 0; state.pay = 0; }
+  syncInputs(); schedule();
+}));
+document.querySelectorAll('.quick [data-add]').forEach(b => b.addEventListener('click', () => {
+  const n = Number(b.dataset.add);
+  state.extra = n === 0 ? 0 : round2((Number(state.extra) || 0) + n);
+  syncInputs(); schedule();
+}));
+$('#results').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-pick]');
+  if (!b) return;
+  state.strategy = b.dataset.pick; syncInputs(); render();
+  const lead = $('#lead');
+  if (lead) lead.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
+});
+
+const dateOf = (i) => {
+  const t = state.issueY * 12 + state.issueM + i, y = Math.floor(t / 12), m = t % 12;
+  return { y, m, d: Math.min(state.issueD, new Date(y, m + 1, 0).getDate()) };
+};
+const labelOf = (i) => { const x = dateOf(i); return x.d + ' ' + MONTHS_GEN[x.m] + ' ' + x.y; };
+const shortLabelOf = (i) => { const x = dateOf(i); return x.d + ' ' + MONTHS[x.m] + ' ' + x.y; };
+
+let chartData = null;
+
+function render() {
+  syncSliders();
+  const s = state, out = $('#results'), warns = [];
+  const nTerm = Math.max(1, Math.round(s.years * 12 + s.months));
+  const r0 = s.rate / 1200;
+  let n = nTerm, payOverride = 0;
+  if (s.ptype === 'diff') {
+    $('#payHint').textContent = 'Для дифференцированного платежа он считается по сроку.';
+  } else if (s.pay > 0 && s.amount > 0) {
+    if (s.pay > s.amount * r0 + 0.5) {
+      payOverride = s.pay;
+      n = r0 === 0 ? Math.ceil(s.amount / s.pay) : Math.ceil(-Math.log(1 - s.amount * r0 / s.pay) / Math.log(1 + r0) - 0.05);
+      n = Math.min(1200, Math.max(1, n));
+      s.years = Math.floor(n / 12); s.months = n % 12;
+      $('#years').value = s.years; $('#months').value = s.months;
+      $('#payHint').textContent = 'Срок посчитан по этому платежу и ставке.';
+    } else {
+      warns.push('Платёж меньше начисляемых процентов, кредит так не погасится. Считаю платёж по сроку.');
+      $('#payHint').textContent = '';
+    }
+  } else {
+    $('#payHint').textContent = `Если пусто, платёж считается по сроку: ${money(annuity(s.amount, r0, nTerm))}. Введите платёж из договора, если он другой.`;
+  }
+  const p = { amount: s.amount, rate: s.rate, n, ptype: s.ptype, pay: payOverride, issue: { y: s.issueY, m: s.issueM, d: s.issueD } };
+  const fail = (extra) => { chartData = null; updateBar(null); out.innerHTML = [...warns, ...extra].map(w => `<div class="warn">${w}</div>`).join(''); };
+
+  if (!(s.amount > 0)) return fail(['Введите сумму кредита.']);
+  let start = (s.extraY * 12 + s.extraM) - (s.issueY * 12 + s.issueM) + (s.extraD > s.issueD ? 1 : 0);
+  if (start < 1) { warns.push('Дата досрочного платежа раньше первого платежа по кредиту. Считаю с первого платежа.'); start = 1; }
+  const base = simulate(p, null, 'term');
+  if (start > base.length) return fail(['К выбранной дате кредит уже погашен по графику. Выберите дату раньше.']);
+  const bal0 = base[start - 1].balance;
+  if (bal0 <= 0.5) return fail(['К выбранной дате остаток долга уже равен нулю. Выберите дату раньше.']);
+  if (!(s.extra > 0)) warns.push('Укажите сумму досрочного платежа, чтобы увидеть экономию.');
+  else if (s.freq === 'once' && s.extra >= bal0) warns.push('Платёж не меньше остатка долга, поэтому кредит будет закрыт полностью.');
+
+  const monthly = s.freq === 'monthly';
+  const extra = { amount: s.extra, mode: s.freq, start };
+  const rowsBy = { term: simulate(p, extra, 'term'), payment: simulate(p, extra, 'payment'), roll: simulate(p, extra, 'roll') };
+  const chosenRows = rowsBy[s.strategy];
+  const sb = summarize(base, start);
+  const sumBy = { term: summarize(rowsBy.term, start), payment: summarize(rowsBy.payment, start), roll: summarize(rowsBy.roll, start) };
+  const sc = sumBy[s.strategy];
+  const saving = sb.interestFrom - sc.interestFrom;
+  const cut = sb.n - sc.n;
+  const Nh = base.length;
+
+  // Итоги за весь кредит, с первого платежа: долг + проценты.
+  const tot = (rows) => { let interest = 0, paid = 0; for (const r of rows) { interest += r.interest; paid += r.pay + r.extra; } return { interest, paid }; };
+  const tb = tot(base), tc = tot(chosenRows);
+  const totBy = { term: tot(rowsBy.term), payment: tot(rowsBy.payment), roll: tot(rowsBy.roll) };
+  let paidBefore = 0;
+  for (const r of base) if (r.m < start) paidBefore += r.pay;
+
+  // Стратегии погашения сравниваются только по самому кредиту: сколько сэкономите на процентах.
+  const econOf = (k) => tb.interest - totBy[k].interest;
+  const items = [];
+  if (Math.abs(econOf('term') - econOf('roll')) < 1 && sumBy.term.n === sumBy.roll.n) {
+    items.push({ key: 'term', also: 'roll', name: 'Сократить срок', sub: sumBy.term,
+      note: 'Платёж прежний, срок короче. Если снижать платёж и каждый раз докладывать всю накопленную разницу, результат тот же: вы отдаёте банку ту же сумму в месяц.' });
+  } else {
+    items.push({ key: 'term', name: 'Сократить срок', sub: sumBy.term, note: 'Платёж прежний, срок короче.' });
+    items.push({ key: 'roll', name: 'Снизить платёж и докладывать разницу', sub: sumBy.roll, note: 'Платёж по графику падает, а разницу вы докладываете в следующий досрочный взнос.' });
+  }
+  items.push({ key: 'payment', name: 'Снизить платёж', sub: sumBy.payment, note: 'Срок прежний, обязательный платёж меньше. Экономия ниже: освободившиеся деньги не идут на погашение долга.' });
+  items.forEach(it => { it.econ = econOf(it.key); it.paid = totBy[it.key].paid; });
+  items.sort((a, b) => b.econ - a.econ);
+  const best = items[0], second = items[1];
+  const maxEcon = Math.max(best.econ, 1);
+  const lc = (t) => t.charAt(0).toLowerCase() + t.slice(1);
+
+  let verdict, verdictSub = '';
+  if (!(s.extra > 0)) verdict = 'Укажите сумму досрочного взноса, чтобы сравнить стратегии.';
+  else {
+    verdict = `Больше всего сэкономите, если ${best.key === 'payment' ? 'снижать платёж' : 'сокращать срок'}${best.also ? ' (или снижать платёж и докладывать разницу)' : ''}.`;
+    verdictSub = `Экономия на процентах ${money(best.econ)}, за весь кредит выплатите ${money(best.paid)} вместо ${money(tb.paid)}.`;
+    if (second && best.econ - second.econ > 1) verdictSub += ` Это на ${money(best.econ - second.econ)} больше, чем «${lc(second.name)}».`;
+  }
+
+  const ICON = {
+    term: '<svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M3 11l4-4 2.5 2.5L13 6M13 6v3.5M13 6H9.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    payment: '<svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M3 5l4 4 2.5-2.5L13 10M13 10V6.5M13 10H9.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    roll: '<svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M12.5 6.5A4.8 4.8 0 0 0 4 5.2M3.5 9.5A4.8 4.8 0 0 0 12 10.8M4 2.8v2.6h2.6M12 13.2v-2.6H9.4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+  };
+  const DESC = {
+    term: 'Платёж прежний, кредит закроется раньше.',
+    payment: 'Платёж меньше, срок прежний.',
+    roll: 'Платёж меньше, а разницу вносите досрочно.'
+  };
+  const stratHTML = items.map(it => {
+    const isBest = it === best;
+    const on = it.key === s.strategy || it.also === s.strategy;
+    const desc = it.also ? DESC.term + ' Если снижать платёж и докладывать разницу, результат тот же.' : DESC[it.key];
+    return `<button type="button" class="strategy" data-pick="${it.key}" aria-pressed="${on}">
+      ${isBest && s.extra > 0 ? '<span class="badge">выгоднее всего</span>' : ''}
+      <span class="st-top"><span class="st-ico">${ICON[it.key]}</span><span class="radio"></span></span>
+      <span class="st-title">${it.name}</span>
+      <span class="st-desc">${desc}</span>
+      <span class="st-save">${money(it.econ)}<small>экономия на процентах</small></span>
+      <span class="st-meta"><span>Последний платёж <b>${shortLabelOf(it.sub.n)}</b></span><span>Всего выплатите <b>${money(it.paid)}</b></span></span>
+    </button>`;
+  }).join('');
+
+
+  let leadSub;
+  if (s.strategy === 'term') {
+    leadSub = cut > 0
+      ? `Срок короче на ${termText(cut)}. Последний платёж: ${labelOf(sc.n)}, раньше было ${labelOf(sb.n)}.`
+      : 'Срок не изменится.';
+  } else if (s.strategy === 'payment') {
+    leadSub = `Платёж в месяц снизится с ${money(sb.payNext)} до ${money(sc.payNext)}. Срок остаётся прежним: ${labelOf(sb.n)}.`;
+  } else {
+    leadSub = `Платёж по графику снизится с ${money(sb.payNext)} до ${money(sc.payNext)}, а вы вносите ${money(sc.outNext)} в месяц. Срок короче на ${termText(cut)}, последний платёж: ${labelOf(sc.n)}.`;
+  }
+  leadSub = leadSub.replace(/\.\./g, '.');
+  const payDiff = sc.payNext - sb.payNext;
+  const showOut = monthly || s.strategy === 'roll';
+
+  const cmpRow = (label, a, b, d, good) => `<tr><td>${label}</td><td data-h="Без досрочного">${a}</td><td data-h="С досрочным">${b}</td><td data-h="Разница" class="d ${good ? 'good' : ''}">${d}</td></tr>`;
+
+  // Наглядное «было / стало»: срок для стратегий с сокращением, платёж для «снизить платёж».
+  let tl;
+  if (s.strategy === 'payment') {
+    const mx = Math.max(sb.payNext, 1);
+    tl = [['Платёж сейчас', sb.payNext / mx, money(sb.payNext), false], ['Платёж после', sc.payNext / mx, money(sc.payNext), true]];
+  } else {
+    const mx = Math.max(sb.left, 1);
+    tl = [['По графику', 1, 'до ' + shortLabelOf(sb.n), false], ['С досрочными', sc.left / mx, 'до ' + shortLabelOf(sc.n), true]];
+  }
+  const tlHTML = `<div class="tl">${tl.map(([name, w, end, isNew]) => `<div class="tl-row"><span class="tl-name">${name}</span><div class="tl-track"><div class="tl-fill ${isNew ? 'new' : ''}" style="width:${Math.max(2, Math.min(100, w * 100)).toFixed(1)}%"></div></div><span class="tl-end">${end}</span></div>`).join('')}</div>`;
+
+  const pct = (v) => (Math.round(v / s.amount * 1000) / 10).toString().replace('.', ',') + '%';
+  const sg = (v, cls) => `<span class="sg ${cls}" style="width:${Math.max(0, v / tb.paid * 100).toFixed(2)}%"></span>`;
+  const totalSave = tb.paid - tc.paid;
+  const totHTML = `
+    <div class="panel">
+      <h2 class="sec" style="margin-top:0">Сколько вы заплатите за весь кредит</h2>
+      <div class="tot">
+        <div class="tot-row">
+          <div class="tot-h"><span>Без досрочного</span><b>${money(tb.paid)}</b></div>
+          <div class="tot-bar">${sg(s.amount, 'debt')}${sg(tb.interest, 'int-base')}</div>
+        </div>
+        <div class="tot-row">
+          <div class="tot-h"><span>С досрочным · ${STRAT_NAME[s.strategy]}</span><b>${money(tc.paid)}</b></div>
+          <div class="tot-bar">${sg(s.amount, 'debt')}${sg(tc.interest, 'int')}${sg(totalSave, 'save')}</div>
+        </div>
+        <div class="legend"><span><i class="lg debt"></i>Долг</span><span><i class="lg int"></i>Проценты</span><span><i class="lg save"></i>Экономия</span></div>
+      </div>
+      <div class="save-strip"><span>Экономия за весь срок</span><b>${money(Math.max(0, totalSave))}</b></div>
+      ${paidBefore > 0.005 ? `<p class="note">Из этих сумм до первого досрочного платежа (${shortLabelOf(start)}) уже выплачено ${money(paidBefore)}, эта часть одинакова в обоих вариантах.</p>` : ''}
+    </div>`;
+
+  // Было / стало: условия без досрочных и с досрочными, строка к строке.
+  const exNext = sc.outNext - sc.payNext;
+  let paySub = '';
+  if (s.extra > 0) {
+    if (monthly || s.strategy === 'roll') paySub = exNext > 0.005 ? `+ ${money(exNext)} досрочно` : '';
+    else paySub = `+ ${money(s.extra)} разово, ${shortLabelOf(start)}`;
+  }
+  const baRows = [
+    ['Платёж в месяц', money(sb.payNext), '', money(sc.payNext), paySub, payDiff < -0.005 ? signed(payDiff) : ''],
+    ['Последний платёж', shortLabelOf(sb.n), 'осталось ' + termText(sb.left), shortLabelOf(sc.n), 'осталось ' + termText(sc.left), cut > 0 ? '−' + termText(cut) : ''],
+    ['Проценты за весь срок', money(tb.interest), '', money(tc.interest), '', totalSave > 0.005 ? signed(tc.interest - tb.interest) : ''],
+    ['Всего выплатите', money(tb.paid), '', money(tc.paid), '', '']
+  ];
+  const baCell = (side, k, v, sub, d, last) => `<div class="ba-cell ${side}${last ? ' last' : ''}"><div class="ba-k">${k}</div><div class="ba-v">${v}</div>${sub ? `<div class="ba-s">${sub}</div>` : ''}${d ? `<div class="ba-d">${d}</div>` : ''}</div>`;
+  const baHTML = `<div class="ba">
+      <div class="ba-h old">Сейчас</div>
+      <div class="ba-h new">С досрочными<span>${STRAT_NAME[s.strategy]}</span></div>
+      ${baRows.map((r, i) => baCell('old', r[0], r[1], r[2], '', i === baRows.length - 1) + baCell('new', r[0], r[3], r[4], r[5], i === baRows.length - 1)).join('')}
+    </div>`;
+
+  let leadNote;
+  if (!(s.extra > 0)) leadNote = 'Добавьте сумму досрочного взноса, чтобы увидеть экономию.';
+  else if (s.strategy === 'payment') leadNote = `Платёж снизится на <b>${money(-payDiff)}</b> в месяц, срок прежний. Эти деньги останутся у вас.`;
+  else leadNote = cut > 0 ? `Кредит закончится на <b>${termText(cut)}</b> раньше, ${labelOf(sc.n)}. Эти деньги останутся у вас.` : 'Срок не изменится.';
+  const share = tb.interest > 0 ? Math.max(0, Math.min(1, totalSave / tb.interest)) : 0;
+  const RC = 2 * Math.PI * 54;
+  const ringHTML = `<div class="ring" aria-label="На ${Math.round(share * 100)}% меньше процентов банку">
+      <svg viewBox="0 0 128 128"><circle class="ring-track" cx="64" cy="64" r="54"/><circle class="ring-prog" cx="64" cy="64" r="54" stroke-dasharray="${RC.toFixed(2)}" stroke-dashoffset="${(RC * (1 - share)).toFixed(2)}"/></svg>
+      <div class="ring-lbl"><b>−${Math.round(share * 100)}%</b><span>меньше процентов<br>банку</span></div>
+    </div>`;
+
+  updateBar(Math.max(0, saving), s.strategy === 'payment' ? ['Платёж', money(sc.payNext)] : ['Срок', cut > 0 ? '−' + termText(cut) : 'без изменений']);
+
+  out.innerHTML = `
+    ${warns.map(w => `<div class="warn">${w}</div>`).join('')}
+    <div class="lead" id="lead">
+      <div class="lead-top">
+        <div>
+          <p class="lead-label">Вы сэкономите на процентах</p>
+          <div class="lead-num">${num2(Math.max(0, saving))}<span class="cur">₽</span></div>
+          <p class="lead-note">${leadNote}</p>
+        </div>
+        ${ringHTML}
+      </div>
+      ${baHTML}
+    </div>
+    <div class="panel">
+      <h2 class="sec" style="margin-top:0">Как распорядиться взносом</h2>
+      <div class="strats">${stratHTML}</div>
+    </div>
+    <div class="panel">
+      <h2 class="sec" style="margin-top:0">Как будет таять долг</h2>
+      <div class="legend"><span><i style="background:var(--c-old)"></i>Без досрочных</span><span><i style="background:var(--c-new)"></i>Ваш сценарий</span></div>
+      <div id="chart"></div>
+      <div class="readout" id="readout"></div>
+    </div>
+    <div class="panel" id="schedPanel">
+      <div class="sched-h">
+        <h2 class="sec" style="margin:0">График платежей</h2>
+        <div class="seg" id="schedMode" role="group" aria-label="Какой график показать">
+          <button type="button" data-v="with" aria-pressed="${schedMode === 'with'}">С досрочными</button>
+          <button type="button" data-v="bank" aria-pressed="${schedMode === 'bank'}">Без досрочных</button>
+        </div>
+      </div>
+      <div class="years" id="schedYears" role="group" aria-label="Год"></div>
+      <div class="plist2" id="schedList"></div>
+    </div>
+    <p class="fine">Проценты считаются как в банке: остаток × ставка × число дней между платежами / 365 (в високосный год 366), с округлением до копеек. Если дата платежа выпадает на выходной, банк может перенести её, тогда суммы будут отличаться на копейки. Страховки и комиссии не учитываются. Условия досрочного погашения смотрите в договоре.</p>`;
+
+  schedData = { bank: base, with: chosenRows, start };
+  renderSched();
+
+  chartData = { base, chosen: chosenRows, start, S: s.amount };
+  drawChart();
+}
+
+// ---- График платежей по годам ----
+let schedMode = 'with', schedYear = null, schedData = null;
+function renderSched() {
+  if (!schedData || !$('#schedList')) return;
+  const rows = schedData[schedMode];
+  const yearOf = (r) => new Date(r.date).getUTCFullYear();
+  const years = [...new Set(rows.map(yearOf))];
+  if (!years.includes(schedYear)) {
+    const startRow = rows[Math.min(schedData.start, rows.length) - 1];
+    schedYear = startRow ? yearOf(startRow) : years[0];
+  }
+  $('#schedYears').innerHTML = years.map(y => `<button type="button" data-y="${y}" aria-pressed="${y === schedYear}">${y}</button>`).join('');
+  const sel = $('#schedYears button[aria-pressed="true"]');
+  if (sel) { const yc = $('#schedYears'); yc.scrollLeft = sel.offsetLeft - yc.offsetLeft - (yc.clientWidth - sel.offsetWidth) / 2; }
+  $('#schedList').innerHTML = rows.filter(r => yearOf(r) === schedYear).map(r => {
+    const d = new Date(r.date);
+    return `<div class="prow2 ${r.extra > 0 ? 'ex' : ''}">
+      <div class="pr-top"><b>${d.getUTCDate()} ${MONTHS_GEN[d.getUTCMonth()]} — ${money(r.pay)}</b><span>Остаток ${money(r.balance)}</span></div>
+      <div class="pr-parts">
+        <div>Основной долг<b>${money(r.principal)}</b></div>
+        <div>Проценты<b>${money(r.interest)}</b></div>
+        ${r.extra > 0 ? `<div class="good">Досрочно<b>${money(r.extra)}</b></div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+  document.querySelectorAll('#schedMode button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === schedMode)));
+}
+$('#results').addEventListener('click', (e) => {
+  const y = e.target.closest('#schedYears [data-y]');
+  if (y) { schedYear = Number(y.dataset.y); renderSched(); return; }
+  const m = e.target.closest('#schedMode [data-v]');
+  if (m) { schedMode = m.dataset.v; renderSched(); }
+});
+
+function balAt(rows, i, S) { return i === 0 ? S : (i <= rows.length ? rows[i - 1].balance : 0); }
+
+function drawChart() {
+  const box = $('#chart');
+  if (!box || !chartData) return;
+  const { base, chosen, start, S } = chartData;
+  const W = Math.max(260, Math.floor(box.clientWidth)), H = 250, L = 50, R = 14, T = 14, B = 26;
+  const N = base.length;
+  const x = (i) => L + (W - L - R) * i / N;
+  const y = (v) => T + (H - T - B) * (1 - v / S);
+  const line = (rows) => { let d = `M${x(0).toFixed(1)},${y(S).toFixed(1)}`; rows.forEach((r, k) => { d += ` L${x(k + 1).toFixed(1)},${y(r.balance).toFixed(1)}`; }); return d; };
+  let gap = `M${x(0).toFixed(1)},${y(S).toFixed(1)}`;
+  for (let i = 1; i <= N; i++) gap += ` L${x(i).toFixed(1)},${y(balAt(base, i, S)).toFixed(1)}`;
+  for (let i = N; i >= 0; i--) gap += ` L${x(i).toFixed(1)},${y(balAt(chosen, i, S)).toFixed(1)}`;
+  gap += ' Z';
+
+  let grid = '';
+  for (let k = 0; k <= 4; k++) {
+    const v = S * k / 4;
+    grid += `<line x1="${L}" x2="${W - R}" y1="${y(v).toFixed(1)}" y2="${y(v).toFixed(1)}" stroke="var(--line)" stroke-width="1" stroke-dasharray="2 4"/>`;
+    grid += `<text class="ax" x="${L - 8}" y="${(y(v) + 4).toFixed(1)}" text-anchor="end">${shortMoney(v)}</text>`;
+  }
+  const years = N / 12, step = years <= 8 ? 1 : years <= 16 ? 2 : years <= 40 ? 5 : 10;
+  for (let i = 0; i <= N; i += 12 * step) {
+    const t = state.issueY * 12 + state.issueM + i;
+    const px = x(i), anchor = px > W - 24 ? 'end' : (px < L + 8 ? 'start' : 'middle');
+    grid += `<text class="ax" x="${px.toFixed(1)}" y="${H - 6}" text-anchor="${anchor}">${Math.floor(t / 12)}</text>`;
+  }
+  const endC = chosen.length, endB = N;
+  const svg = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="График остатка долга с досрочным погашением и без него">
+    ${grid}
+    <defs><linearGradient id="ga" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--c-new);stop-opacity:.22"/><stop offset="1" style="stop-color:var(--c-new);stop-opacity:0"/></linearGradient></defs>
+    <path d="${line(chosen)} L${x(chosen.length).toFixed(1)},${y(0).toFixed(1)} L${x(0).toFixed(1)},${y(0).toFixed(1)} Z" fill="url(#ga)"/>
+    <line x1="${x(start).toFixed(1)}" x2="${x(start).toFixed(1)}" y1="${T}" y2="${H - B}" stroke="var(--muted)" stroke-width="1" stroke-dasharray="3 3"/>
+    <text class="ax" x="${(x(start) + 6).toFixed(1)}" y="${H - B - 8}" text-anchor="${x(start) > W - 130 ? 'end' : 'start'}" dx="${x(start) > W - 130 ? -12 : 0}">начало досрочных</text>
+    <path d="${line(base)}" fill="none" stroke="var(--c-old)" stroke-width="2.5" stroke-dasharray="6 6" stroke-linejoin="round"/>
+    <path d="${line(chosen)}" fill="none" stroke="var(--c-new)" stroke-width="2.5" stroke-linejoin="round"/>
+        <circle cx="${x(endC).toFixed(1)}" cy="${y(0).toFixed(1)}" r="5" fill="var(--c-new)" stroke="var(--surface)" stroke-width="2"/>
+    <g id="cur" style="display:none">
+      <line id="curL" y1="${T}" y2="${H - B}" stroke="var(--ink)" stroke-width="1"/>
+      <circle id="curB" r="4.5" fill="var(--c-old)"/>
+      <circle id="curC" r="5" fill="var(--c-new)"/>
+    </g>
+  </svg>`;
+  box.innerHTML = svg;
+  const el = box.querySelector('svg'), ro = $('#readout');
+  const idle = 'Проведите пальцем или курсором по графику, чтобы увидеть остаток долга в нужный месяц.';
+  ro.innerHTML = idle;
+  const cur = el.querySelector('#cur'), curL = el.querySelector('#curL'), curB = el.querySelector('#curB'), curC = el.querySelector('#curC');
+  el.addEventListener('pointermove', (e) => {
+    const rect = el.getBoundingClientRect();
+    const px = (e.clientX - rect.left) * (W / rect.width);
+    const i = Math.max(0, Math.min(N, Math.round((px - L) / (W - L - R) * N)));
+    const bb = balAt(base, i, S), bc = balAt(chosen, i, S);
+    cur.style.display = '';
+    curL.setAttribute('x1', x(i)); curL.setAttribute('x2', x(i));
+    curB.setAttribute('cx', x(i)); curB.setAttribute('cy', y(bb));
+    curC.setAttribute('cx', x(i)); curC.setAttribute('cy', y(bc));
+    ro.innerHTML = `<b>${shortLabelOf(i)}</b>, платёж №${i}<br>Без досрочного: ${money(bb)} · С досрочным: <b>${money(bc)}</b>`;
+  });
+  el.addEventListener('pointerleave', () => { cur.style.display = 'none'; ro.innerHTML = idle; });
+}
+
+// ---- Плавающая панель итогов (телефон) ----
+let resultsVisible = false, barHasData = false;
+function updateBar(saving, second) {
+  barHasData = saving !== null;
+  if (barHasData) {
+    $('#mbSave').textContent = money(saving);
+    $('#mbK2').textContent = second[0];
+    $('#mbTerm').textContent = second[1];
+  }
+  $('#mbar').classList.toggle('off', resultsVisible || !barHasData);
+}
+$('#mbGo').addEventListener('click', () => {
+  const lead = $('#lead') || $('#results');
+  lead.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
+});
+if ('IntersectionObserver' in window) {
+  new IntersectionObserver((entries) => {
+    resultsVisible = entries[0].isIntersecting;
+    $('#mbar').classList.toggle('off', resultsVisible || !barHasData);
+  }, { rootMargin: '0px 0px -30% 0px' }).observe($('#results'));
+}
+
+// ---- Профили расчёта ----
+const PKEYS = ['kind', 'ptype', 'freq', 'strategy', 'pay', 'amount', 'rate', 'years', 'months', 'issueD', 'issueM', 'issueY', 'extra', 'extraD', 'extraM', 'extraY'];
+const NUMK = ['pay', 'amount', 'rate', 'years', 'months', 'issueD', 'issueM', 'issueY', 'extra', 'extraD', 'extraM', 'extraY'];
+const ALLOWED = { kind: ['mortgage', 'auto', 'consumer'], ptype: ['annuity', 'diff'], freq: ['once', 'monthly'], strategy: ['term', 'payment', 'roll'] };
+const KIND_NAME = { mortgage: 'Ипотека', auto: 'Автокредит', consumer: 'Потребительский' };
+const LS_KEY = 'prepay-calc-profiles-v1';
+const esc = (t) => String(t).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+let profiles = [], activeId = null, delArm = null, delTimer = 0;
+
+function lsRead() { try { const v = JSON.parse(localStorage.getItem(LS_KEY) || '[]'); return Array.isArray(v) ? v : []; } catch (e) { return []; } }
+function lsWrite(list) { try { localStorage.setItem(LS_KEY, JSON.stringify(list)); return true; } catch (e) { return false; } }
+function pstatus(text) { $('#pstatus').textContent = text; }
+function baseStatus() { return 'Профили хранятся на этом устройстве, интернет не нужен.'; }
+
+function renderProfiles() {
+  const el = $('#plist');
+  if (!profiles.length) { el.innerHTML = '<p class="hint">Пока нет сохранённых расчётов.</p>'; return; }
+  el.innerHTML = profiles.map(p => {
+    const d = p.data || {};
+    const sub = [KIND_NAME[d.kind] || 'Кредит', money(d.amount || 0), String(d.rate ?? '').replace('.', ',') + '%', termText((d.years || 0) * 12 + (d.months || 0))].join(' · ');
+    return `<div class="pitem"><button type="button" class="load" data-load="${esc(p.id)}" aria-pressed="${p.id === activeId}">${esc(p.name)}<small>${esc(sub)}</small></button><button type="button" class="del" data-del="${esc(p.id)}">${delArm === p.id ? 'Точно?' : 'Удалить'}</button></div>`;
+  }).join('');
+}
+function snapshotState() { const o = {}; for (const k of PKEYS) o[k] = state[k]; return o; }
+function loadProfile(id) {
+  const p = profiles.find(x => x.id === id);
+  if (!p || !p.data) return;
+  state.pay = 0;
+  for (const k of PKEYS) {
+    const v = p.data[k];
+    if (v === undefined || v === null) continue;
+    if (NUMK.includes(k)) { if (Number.isFinite(Number(v))) state[k] = Number(v); }
+    else if (ALLOWED[k].includes(v)) state[k] = v;
+  }
+  activeId = id; $('#pname').value = p.name;
+  syncInputs(); renderProfiles(); render(); pstatus('Загружено: ' + p.name);
+}
+async function saveProfile() {
+  const name = ($('#pname').value.trim() || `${KIND_NAME[state.kind]} ${money(state.amount)}`).slice(0, 60);
+  const same = profiles.find(p => p.name === name);
+  if (!same && profiles.length >= 30) { pstatus('Можно сохранить не больше 30 профилей. Удалите ненужные.'); return; }
+  const id = same ? same.id : 'p_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
+  const rec = { name, savedAt: Date.now(), data: snapshotState() };
+  activeId = id; $('#pname').value = name;
+  const done = same ? 'Профиль обновлён: ' + name : 'Профиль сохранён: ' + name;
+  const list = lsRead().filter(p => p.id !== id);
+  list.unshift({ id, ...rec });
+  if (lsWrite(list)) { profiles = list; renderProfiles(); pstatus(done); }
+  else pstatus('Браузер не даёт сохранить данные, профиль не сохранён.');
+}
+function deleteProfile(id) {
+  const list = lsRead().filter(p => p.id !== id); lsWrite(list); profiles = list;
+  if (activeId === id) activeId = null;
+  renderProfiles(); pstatus('Профиль удалён.');
+}
+$('#plist').addEventListener('click', (e) => {
+  const l = e.target.closest('[data-load]');
+  if (l) { loadProfile(l.dataset.load); return; }
+  const d = e.target.closest('[data-del]');
+  if (!d) return;
+  const id = d.dataset.del;
+  if (delArm === id) { clearTimeout(delTimer); delArm = null; deleteProfile(id); return; }
+  delArm = id; renderProfiles();
+  clearTimeout(delTimer);
+  delTimer = setTimeout(() => { delArm = null; renderProfiles(); }, 3000);
+});
+$('#psave').addEventListener('click', saveProfile);
+$('#pname').addEventListener('keydown', (e) => { if (e.key === 'Enter') saveProfile(); });
+profiles = lsRead(); renderProfiles(); pstatus(baseStatus());
+
+let lastW = 0;
+new ResizeObserver(() => { const w = $('#results').clientWidth; if (w !== lastW) { lastW = w; drawChart(); } }).observe($('#results'));
+render();
+</script>
