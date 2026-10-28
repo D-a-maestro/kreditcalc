@@ -716,7 +716,17 @@ function renderPlan() {
     <div><div class="k">Экономия на процентах</div><div class="v good">${mln(Math.max(0, mn.net - mc.net))}</div><div class="k">если следовать плану</div></div>
     <div><div class="k">Долг сейчас</div><div class="v">${mln(sumNow)}</div><div class="k">${lf >= 0 ? 'после платежа ' + labelFull(lf) : 'на ' + baseLabel()}</div></div>
   </div></div>`;
-  if (!r || sumNow < 0.5 && lf >= 0) return flash + hero + `<section class="card"><div class="alert ok" style="margin:0"><b>Все кредиты закрыты.</b> Новые можно добавить в «Исходных данных».</div></section>`;
+  const princ = Object.values(S.loans).reduce((q, l) => q + (Number(l.bal0) || 0), 0);
+  const tCols = [sim.tot, none.tot].map(t => ({ all: princ + t.int, int: t.int, own: princ + t.int - t.comp, comp: t.comp }));
+  const showComp = tCols[0].comp > 0.5 || tCols[1].comp > 0.5;
+  const totals = `<section class="card"><h2>Сколько выплатите за весь срок</h2>
+    <div class="table-scroll"><table><thead><tr><th></th><th>По плану</th><th>Без досрочных</th></tr></thead><tbody>
+      <tr><td>Всего с процентами</td>${tCols.map(c => '<td><b>' + money(c.all) + '</b></td>').join('')}</tr>
+      <tr><td>из них проценты</td>${tCols.map(c => '<td>' + money(c.int) + '</td>').join('')}</tr>
+      ${showComp ? '<tr><td>Возместит работодатель</td>' + tCols.map(c => '<td>−' + money(c.comp) + '</td>').join('') + '</tr><tr class="total"><td>Из своих денег</td>' + tCols.map(c => '<td>' + money(c.own) + '</td>').join('') + '</tr>' : ''}
+    </tbody></table></div>
+    <div class="note">Считается с начала учёта (${baseLabel()}): основной долг на тот момент плюс все проценты. Уже внесённые платежи входят в сумму.</div></section>`;
+  if (!r || sumNow < 0.5 && lf >= 0) return flash + hero + totals + `<section class="card"><div class="alert ok" style="margin:0"><b>Все кредиты закрыты.</b> Новые можно добавить в «Исходных данных».</div></section>`;
   // этот месяц
   const ids = DISPLAY.filter(k => r.loans[k].open > 0.5);
   let tp = 0, te = 0;
@@ -763,7 +773,7 @@ function renderPlan() {
     <div class="note" style="margin-top:4px">${goalTxt}${ce ? ' План учитывает окончание компенсации, чтобы потом хватало денег на платежи.' : ''}</div>
     <div class="table-scroll" style="margin-top:12px"><table><thead><tr><th>Кредит</th><th>Ставка</th><th>Остаток сейчас</th><th>Закроется по плану</th><th>Без досрочных</th></tr></thead><tbody>${closeRows}</tbody></table></div>
     ${chartSVG({ sim, base: none }, ce ? monthAtDate(sim, isoMs(S.settings.compEnd)) : undefined, ce ? 'конец компенсации' : '', 'по плану')}</section>`;
-  return flash + hero + month + strat;
+  return flash + hero + totals + month + strat;
 }
 function extraHtml() {
   const amt = ui.extra > 0 ? ui.extra : 0; ui.extraShown = amt;
